@@ -1,0 +1,30 @@
+# Example everyday profile. Copy it to the profiles directory as default.toml
+# (see `lindwurm profiles`) and run `lindwurm apply`. Without a default.toml
+# lindwurm uses the built-in "factory" profile.
+#
+# Only list what differs from the factory settings (`lindwurm show factory`).
+# `lindwurm buttons` lists button names, `lindwurm actions` the actions.
+extends = "factory"
+
+[buttons]
+# The factory tilt (horizontal scroll) needs the vendor's Windows service;
+# media keys work everywhere.
+tilt-left    = "volume-down"
+tilt-right   = "volume-up"
+thumb-bottom = "play-pause"
+illumination = "macro:reopen-tab"  # the Illumination Key, also called side-right
+
+# Steps: "+k" press, "-k" release, "k" press and release, "100ms" pause after
+# the previous step (multiples of 50ms), lmb/rmb/mmb/mb4/mb5 for mouse buttons.
+# At most 47 steps and 16 macros; every pressed key must be released, so
+# 46 steps (23 taps) is the practical limit. Key names follow US key
+# positions, so on other layouts some keys differ (e.g. y and z on German).
+[macros.reopen-tab]
+steps = ["+lctrl", "+lshift", "t", "-lshift", "-lctrl"]
+
+# LED, only sent when set; factory is green, brightness high, fast pulse.
+# Brightness and effect also take levels 1-4.
+[led]
+effect = "steady"           # steady, slow, medium, fast
+# color      = "#00ff00"
+# brightness = "high"       # off, low, medium, high

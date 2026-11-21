@@ -1,0 +1,25 @@
+# Factory settings of the Sharkoon Drakonia Black, taken from profile GROUP0
+# of Mouse.ini in the vendor software (sw_config_lindwurm_black_18135).
+# Built into lindwurm as profile "factory"; clone it to make changes.
+
+dpi = 3                    # DPI=3
+
+[led]
+color      = "#00ff00"     # LedColor=65280 (COLORREF, green)
+brightness = "high"        # LedState=4
+effect     = "fast"        # FlashState=4, fast pulse
+
+[buttons]
+left         = "left-click"     # ButtonAssigned1:  Klicken
+right        = "right-click"    # ButtonAssigned2:  Menü
+middle       = "middle-click"   # ButtonAssigned3:  Mittlere Taste
+thumb-front  = "forward"        # ButtonAssigned4:  Vorwärts
+thumb-back   = "back"           # ButtonAssigned5:  Zurück
+tilt-left    = "scroll-left"    # ButtonAssigned6:  Links scrollen
+tilt-right   = "scroll-right"   # ButtonAssigned7:  Rechts scrollen
+dpi-up       = "dpi-up"         # ButtonAssigned8:  DPI+
+dpi-down     = "dpi-down"       # ButtonAssigned9:  DPI-
+illumination = "led-switch"     # ButtonAssigned10: LED-Farbwahl (Illumination Key)
+thumb-bottom = "double-click"   # ButtonAssigned11: Doppelklick
+wheel-up     = "scroll"
+wheel-down   = "scroll"

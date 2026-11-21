@@ -1,0 +1,14 @@
+[package]
+name = "lindwurm-gui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+readme = "../../README.md"
+keywords.workspace = true
+categories.workspace = true
+description = "Graphical interface of lindwurm, a configuration tool for Holtek 04d9:a067 gaming mice"
+
+[dependencies]
+lindwurm-core = { path = "../lindwurm-core", version = "0.1.0" }
+eframe = "0.37.0"
+rfd = "0.18.0"

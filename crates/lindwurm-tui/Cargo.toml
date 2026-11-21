@@ -1,0 +1,14 @@
+[package]
+name = "lindwurm-tui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+readme = "../../README.md"
+keywords.workspace = true
+categories.workspace = true
+description = "Terminal interface of lindwurm, a configuration tool for Holtek 04d9:a067 gaming mice"
+
+[dependencies]
+crossterm = "0.29.0"
+lindwurm-core = { path = "../lindwurm-core", version = "0.1.0" }
+ratatui = "0.30.2"

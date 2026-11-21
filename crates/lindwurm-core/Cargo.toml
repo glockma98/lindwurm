@@ -1,0 +1,19 @@
+[package]
+name = "lindwurm-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+readme = "../../README.md"
+keywords.workspace = true
+categories.workspace = true
+description = "Protocol, profiles and device access for Holtek 04d9:a067 gaming mice such as the Sharkoon Drakonia Black"
+
+[dependencies]
+directories = "6.0.0"
+hidapi = { version = "2.6.7", default-features = false, features = ["linux-native"] }
+serde = { version = "1.0.229", features = ["derive"] }
+toml = "1.2.2"
+toml_edit = "0.25.20"
+
+[dev-dependencies]
+tempfile = "3.27.0"

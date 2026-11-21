@@ -1,0 +1,4 @@
+# Lets the logged-in user configure mice with the Holtek 04d9:a067 controller
+# (e.g. Sharkoon Drakonia Black) through hidraw. The file name must sort before
+# 73-seat-late.rules, which turns the uaccess tag into an ACL.
+KERNEL=="hidraw*", ATTRS{idVendor}=="04d9", ATTRS{idProduct}=="a067", TAG+="uaccess"

@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = ["crates/lindwurm-core", "crates/lindwurm", "crates/lindwurm-tui", "crates/lindwurm-gui"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/glockma98/lindwurm"
+readme = "README.md"
+keywords = ["mouse", "hid", "holtek", "macro", "gaming-mouse"]
+categories = ["command-line-utilities", "hardware-support"]

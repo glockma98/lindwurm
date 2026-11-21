@@ -1,0 +1,24 @@
+# Example game profile: higher DPI, game keys on the extra buttons and a red
+# LED that shows which profile is active. Switch with `lindwurm apply game`.
+extends = "factory"
+dpi = 5
+
+[buttons]
+# The thumb buttons stay back/forward (mouse buttons 4/5), which most games
+# can bind directly.
+tilt-left    = "key:tab"            # scoreboard
+tilt-right   = "key:m"              # map
+thumb-bottom = "macro:crouch-jump"
+illumination = "macro:quick-swap"
+
+# Jump and crouch at the top of the jump to reach higher ledges.
+[macros.crouch-jump]
+steps = ["+space", "100ms", "+lctrl", "400ms", "-lctrl", "-space"]
+
+# Switch to the last weapon and back, e.g. to skip an animation.
+[macros.quick-swap]
+steps = ["q", "50ms", "q"]
+
+[led]
+color  = "#ff0000"
+effect = "steady"
