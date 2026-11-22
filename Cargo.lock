@@ -2151,14 +2151,14 @@ dependencies = [
 
 [[package]]
 name = "lindwurm"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "lindwurm-core",
 ]
 
 [[package]]
 name = "lindwurm-core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "directories",
  "hidapi",
@@ -2170,7 +2170,7 @@ dependencies = [
 
 [[package]]
 name = "lindwurm-gui"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "eframe",
  "lindwurm-core",
@@ -2179,7 +2179,7 @@ dependencies = [
 
 [[package]]
 name = "lindwurm-tui"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "crossterm",
  "lindwurm-core",

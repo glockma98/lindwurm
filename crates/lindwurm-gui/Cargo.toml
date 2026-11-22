@@ -10,6 +10,6 @@ categories.workspace = true
 description = "Graphical interface of lindwurm, a configuration tool for Holtek 04d9:a067 gaming mice"
 
 [dependencies]
-lindwurm-core = { path = "../lindwurm-core", version = "0.2.0" }
+lindwurm-core = { path = "../lindwurm-core", version = "0.2.1" }
 eframe = "0.37.0"
 rfd = "0.18.0"
