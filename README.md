@@ -16,7 +16,7 @@ layout on any computer.
 
 | Device | USB ID | Status |
 |---|---|---|
-| Sharkoon Drakonia Black | `04d9:a067` | tested on Linux and Windows 11 |
+| Sharkoon Drakonia Black | `04d9:a067` | everything tested on Linux; buttons, macros, DPI and LED on Windows 11 |
 | Sharkoon Drakonia | `04d9:a067` | same vendor software, expected to work |
 | Perixx MX-2000 / MX-3000 | `04d9:a067` | same controller, untested |
 
@@ -110,10 +110,10 @@ it. In the profile list: `Enter` apply, `a` quick apply, `c` clone, `D` delete,
 | `version` | print the version |
 
 Writing buttons and macros takes about a second. A quick apply (`--quick`,
-*Quick*, `a`) skips them when they match the last write from this computer and
-only sends the settings, which takes a fraction of a second. lindwurm cannot
-read the mouse, so use a normal apply after the mouse was set up on another
-computer.
+*Quick*, `a`) skips them, and an unchanged polling rate, when they match the
+last write from this computer and only sends the other settings, which takes a
+fraction of a second. lindwurm cannot read the mouse, so use a normal apply
+after the mouse was set up on another computer.
 
 Switching profiles from a hotkey is a matter of running `lindwurm apply <name>`.
 
@@ -155,9 +155,8 @@ More examples are in [`examples/`](examples).
 | `[led]` `brightness` | `off`, `low`, `medium`, `high` | `high` |
 | `[led]` `effect` | `steady`, `slow`, `medium`, `fast` (pulsing) | `fast` |
 
-Settings a profile does not contain are left as they are on the mouse. A new
-polling rate makes the mouse reconnect for a moment, so lindwurm only sends it
-when it differs from the last written profile.
+Settings a profile does not contain are left as they are on the mouse. Setting
+the polling rate makes the mouse reconnect for a moment.
 
 ### Buttons
 

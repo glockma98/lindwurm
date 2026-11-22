@@ -38,10 +38,11 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 /// Loads a profile, writes it to the mouse and records it as applied.
 ///
-/// Writing buttons and macros takes most of the time. With `quick` they are
-/// skipped when they match the last write from this computer; that record
-/// is wrong if the mouse was written elsewhere since, so it is opt-in. The
-/// returned flag tells whether they were skipped.
+/// Writing buttons and macros takes most of the time, and a new polling rate
+/// makes the mouse reconnect. With `quick` both are skipped when they match
+/// the last write from this computer; that record is wrong if the mouse was
+/// written elsewhere since, so it is opt-in. The returned flag tells whether
+/// buttons and macros were skipped.
 pub fn apply_profile(
     store: &profile::Store,
     arg: &str,
@@ -62,12 +63,10 @@ pub fn apply_profile(
         let max = config::SENSITIVITY_MAX;
         dev.set_sensitivity(s.x.unwrap_or(max), s.y.unwrap_or(max))?;
     }
-    // Changing the rate makes the mouse reconnect for a moment, so skip it
-    // when the last written profile already set the same rate.
     let rate = p
         .config
         .polling_rate
-        .filter(|r| store.applied_polling_rate() != Some(*r));
+        .filter(|r| !quick || store.applied_polling_rate() != Some(*r));
     store.write_state(&p.name, &p.config, &p.layout)?;
     if let Some(r) = rate {
         dev.set_polling_rate(r)?;

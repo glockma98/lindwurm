@@ -52,7 +52,10 @@ impl Store {
             ));
         }
         let p = PathBuf::from(arg);
-        if arg.ends_with(".toml") || p.components().count() > 1 {
+        let toml_ext = p
+            .extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("toml"));
+        if toml_ext || p.components().count() > 1 {
             let name = p
                 .file_stem()
                 .map(|s| s.to_string_lossy().into_owned())
