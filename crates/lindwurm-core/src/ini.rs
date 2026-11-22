@@ -1,10 +1,10 @@
 //! Import of Mouse.ini from the vendor's Windows software.
 //!
-//! Each of the five [GROUPn] sections is one profi            led.is_empty() && buttons.is_empty() && sensitivity.is_empty() && settings.is_empty();e; a profile exported by
+//! Each of the five [GROUPn] sections is one profile; a profile exported by
 //! the vendor software (*.conf) has the same keys in a single [Profile]
-//! section. ButtonAssigned1-11 are
-//! 84-byte records in hex: CC, function type, step count, 26 entries of
-//! [flags/delay, usage, unused], and a checksum byte (sum of the others).
+//! section. ButtonAssigned1-11 are 84-byte records in hex: CC, function type,
+//! step count, 26 entries of [flags/delay, usage, unused], and a checksum byte
+//! (sum of the others).
 //! Function types and the record layout come from a static analysis of the
 //! vendor's hid.exe; the factory file only contains the simple types, so
 //! single keys and recorded macros are decoded from that analysis alone.
