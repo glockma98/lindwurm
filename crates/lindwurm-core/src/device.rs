@@ -11,7 +11,10 @@ use crate::{err, Result};
 
 pub const VENDOR_ID: u16 = 0x04D9;
 pub const PRODUCT_ID: u16 = 0xA067;
-const REPORT_INTERVAL: Duration = Duration::from_millis(10);
+// The reports go out synchronously; the pause is only a safety margin. A
+// Drakonia Black took a full write without any pause (0.76 s), 2 ms keeps it
+// at about 1.2 s instead of 2.8 s with the former 10 ms.
+const REPORT_INTERVAL: Duration = Duration::from_millis(2);
 
 /// Same text as contrib/70-lindwurm.rules (checked by a test).
 pub const UDEV_RULE: &str =
