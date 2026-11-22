@@ -70,6 +70,32 @@ impl Store {
         Ok((c, name))
     }
 
+    /// Each profile of the extends chain with its own settings, starting with
+    /// the profile itself.
+    pub fn chain(&self, arg: &str) -> Result<Vec<(String, Config)>> {
+        let (mut path, mut name) = self.resolve(arg)?;
+        let mut seen = HashSet::new();
+        let mut out = Vec::new();
+        loop {
+            let key = fs::canonicalize(&path).unwrap_or_else(|_| path.clone());
+            if !seen.insert(key) {
+                return Err(err!("{}: extends loop", path.display()));
+            }
+            let c = Config::parse(&self.read_profile(&path)?)
+                .map_err(|e| err!("{}: {e}", path.display()))?;
+            let parent = c.extends.clone();
+            out.push((name, c));
+            let Some(parent) = parent else {
+                return Ok(out);
+            };
+            let (mut p, n) = self.resolve(&parent)?;
+            if !is_name(&parent) && p.is_relative() {
+                p = path.parent().unwrap_or(Path::new(".")).join(p);
+            }
+            (path, name) = (p, n);
+        }
+    }
+
     fn load_chain(&self, path: &Path, seen: &mut HashSet<PathBuf>) -> Result<Config> {
         let key = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
         if !seen.insert(key) {

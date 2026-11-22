@@ -251,7 +251,7 @@ impl App {
         match f.source {
             Source::Own => {}
             Source::Inherited => {
-                ui.weak("inherited");
+                ui.weak(format!("from {}", f.from.as_deref().unwrap_or("?")));
             }
             Source::Default => {
                 ui.weak("default");
@@ -271,8 +271,13 @@ impl App {
     }
 
     fn choice(&mut self, ui: &mut egui::Ui, f: &Field, options: &[&str]) {
+        self.choice_with(ui, f, options, "unchanged");
+    }
+
+    /// `empty` names the choice that removes the field.
+    fn choice_with(&mut self, ui: &mut egui::Ui, f: &Field, options: &[&str], empty: &str) {
         let shown = if f.value.is_empty() {
-            "unchanged"
+            empty
         } else {
             f.value.as_str()
         };
@@ -280,10 +285,7 @@ impl App {
         egui::ComboBox::from_id_salt(&f.key)
             .selected_text(shown)
             .show_ui(ui, |ui| {
-                if ui
-                    .selectable_label(f.value.is_empty(), "unchanged")
-                    .clicked()
-                {
+                if ui.selectable_label(f.value.is_empty(), empty).clicked() {
                     pick = Some(None);
                 }
                 for o in options {
@@ -370,6 +372,16 @@ impl App {
                     for f in &fields {
                         ui.label(&f.key);
                         match f.key.as_str() {
+                            "extends" => {
+                                let others: Vec<String> = self
+                                    .profiles
+                                    .iter()
+                                    .filter(|p| Some(*p) != self.selected.as_ref())
+                                    .cloned()
+                                    .collect();
+                                let others: Vec<&str> = others.iter().map(String::as_str).collect();
+                                self.choice_with(ui, f, &others, "none");
+                            }
                             "dpi" => self.choice(ui, f, &["1", "2", "3", "4", "5", "6", "7"]),
                             "polling-rate" => self.choice(ui, f, &["1000", "500", "250", "125"]),
                             k if k.starts_with("sensitivity.") => self.choice(

@@ -172,6 +172,7 @@ fn centered(area: Rect, w: u16, h: u16) -> Rect {
 
 fn edit_hint(key: &str) -> String {
     match key {
+        "extends" => "profile name, empty = none".into(),
         "dpi" => "1-7, empty = unchanged".into(),
         "polling-rate" => "1000 500 250 125 (Hz), empty = unchanged".into(),
         k if k.starts_with("sensitivity.") => "1-10 (10 = unscaled), empty = unchanged".into(),
@@ -290,6 +291,17 @@ impl App {
         };
         let target = Target::Field(f.key.clone());
         let modal = match f.key.as_str() {
+            "extends" => {
+                let mut items = vec![("none".to_string(), Pick::Set(None))];
+                let me = self.selected();
+                items.extend(
+                    self.profiles
+                        .iter()
+                        .filter(|p| Some(*p) != me.as_ref())
+                        .map(|p| (p.clone(), Pick::Set(Some(p.clone())))),
+                );
+                Modal::Picker(Picker::new("Extends profile", items, target))
+            }
             "dpi" => Modal::Picker(Picker::new(
                 "DPI level",
                 choice(&["1", "2", "3", "4", "5", "6", "7"]),
@@ -841,10 +853,15 @@ impl App {
             .iter()
             .map(|fl| {
                 let (value, style, note) = match fl.source {
-                    Source::Own => (fl.value.as_str(), Style::new(), ""),
-                    Source::Inherited => (fl.value.as_str(), Style::new(), " ↑"),
-                    Source::Default if fl.value.is_empty() => ("unchanged", dim, ""),
-                    Source::Default => (fl.value.as_str(), dim, ""),
+                    Source::Own => (fl.value.as_str(), Style::new(), String::new()),
+                    Source::Inherited => (
+                        fl.value.as_str(),
+                        Style::new(),
+                        format!("  ↑ {}", fl.from.as_deref().unwrap_or_default()),
+                    ),
+                    Source::Default if fl.key == "extends" => ("none", dim, String::new()),
+                    Source::Default if fl.value.is_empty() => ("unchanged", dim, String::new()),
+                    Source::Default => (fl.value.as_str(), dim, String::new()),
                 };
                 ListItem::new(Line::from(vec![
                     Span::raw(format!("{:<20} ", fl.key)),
@@ -866,7 +883,7 @@ impl App {
             .block(
                 Block::bordered()
                     .title(title)
-                    .title_bottom(" ↑ inherited · grey = default ")
+                    .title_bottom(" ↑ inherited from · grey = default ")
                     .border_style(fborder),
             )
             .highlight_style(f_hl);

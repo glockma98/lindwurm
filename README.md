@@ -81,7 +81,8 @@ Or start `lindwurm-gui` / `lindwurm-tui`, pick a profile, edit it and apply it.
 and *Import Mouse.ini* (also takes `.conf` exports); every setting of the
 selected profile on the right, with menus for actions, keys, consumer keys
 and macros, and a color picker for the LED. Each field shows whether its
-value is set in the profile, inherited, or the factory default.
+value is set in the profile, inherited (and from which profile), or the
+factory default; `extends` picks the profile to build on.
 
 **TUI** (`lindwurm-tui`): the same in a terminal. `Tab` switches between the
 profile list and the fields. On a field, `Enter` opens a picker (type to

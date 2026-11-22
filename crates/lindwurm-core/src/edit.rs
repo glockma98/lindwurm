@@ -3,7 +3,7 @@
 
 use std::fs;
 
-use toml_edit::{value, Array, DocumentMut, Item, Table};
+use toml_edit::{value, Array, DocumentMut, Item, Key, Table};
 
 use crate::config::{canonical_button, Config, MacroConfig, BUTTONS, BUTTON_ALIASES};
 use crate::profile::Store;
@@ -21,11 +21,13 @@ pub enum Source {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Field {
-    /// "dpi", "polling-rate", "sensitivity.x", "sensitivity.y", "led.color",
+    /// "extends", "dpi", "polling-rate", "sensitivity.x", "sensitivity.y", "led.color",
     /// "led.brightness", "led.effect", "buttons.<name>" or "macros.<name>".
     pub key: String,
     pub value: String,
     pub source: Source,
+    /// For inherited values, the profile in the extends chain that sets it.
+    pub from: Option<String>,
 }
 
 /// Macro value as one string: optional "repeat=N" followed by the steps.
@@ -54,6 +56,9 @@ pub fn parse_macro_value(s: &str) -> Result<MacroConfig> {
 
 fn entries(c: &Config) -> Vec<(String, String)> {
     let mut v = Vec::new();
+    if let Some(e) = &c.extends {
+        v.push(("extends".into(), e.clone()));
+    }
     if let Some(d) = c.dpi {
         v.push(("dpi".into(), d.to_string()));
     }
@@ -89,21 +94,26 @@ fn entries(c: &Config) -> Vec<(String, String)> {
 impl Store {
     /// Every editable field of a profile with its effective value.
     pub fn fields(&self, arg: &str) -> Result<Vec<Field>> {
-        let (path, _) = self.resolve(arg)?;
-        let own = Config::parse(&self.read_profile(&path)?)?;
-        let (merged, _) = self.load(arg)?;
-        let own: Vec<_> = entries(&own);
-        let merged: Vec<_> = entries(&merged);
-        let lookup = |k: &str| -> (String, Source) {
-            if let Some((_, v)) = own.iter().find(|(x, _)| x == k) {
-                return (v.clone(), Source::Own);
+        let chain: Vec<(String, Vec<(String, String)>)> = self
+            .chain(arg)?
+            .iter()
+            .map(|(n, c)| (n.clone(), entries(c)))
+            .collect();
+        let lookup = |k: &str| -> (String, Source, Option<String>) {
+            // A parent's own extends is not a setting of this profile.
+            let levels = if k == "extends" { 1 } else { chain.len() };
+            for (i, (name, e)) in chain.iter().enumerate().take(levels) {
+                if let Some((_, v)) = e.iter().find(|(x, _)| x == k) {
+                    return match i {
+                        0 => (v.clone(), Source::Own, None),
+                        _ => (v.clone(), Source::Inherited, Some(name.clone())),
+                    };
+                }
             }
-            if let Some((_, v)) = merged.iter().find(|(x, _)| x == k) {
-                return (v.clone(), Source::Inherited);
-            }
-            (String::new(), Source::Default)
+            (String::new(), Source::Default, None)
         };
         let mut keys: Vec<String> = [
+            "extends",
             "dpi",
             "polling-rate",
             "sensitivity.x",
@@ -117,15 +127,18 @@ impl Store {
         .collect();
         keys.extend(BUTTONS.iter().map(|(n, _, _)| format!("buttons.{n}")));
         keys.extend(
-            merged
+            chain
                 .iter()
+                .rev()
+                .flat_map(|(_, e)| e.iter())
                 .filter(|(k, _)| k.starts_with("macros."))
-                .map(|(k, _)| k.clone()),
+                .map(|(k, _)| k.clone())
+                .collect::<std::collections::BTreeSet<_>>(),
         );
         Ok(keys
             .into_iter()
             .map(|key| {
-                let (mut value, source) = lookup(&key);
+                let (mut value, source, from) = lookup(&key);
                 if source == Source::Default {
                     if let Some(b) = key.strip_prefix("buttons.") {
                         value = BUTTONS
@@ -135,7 +148,12 @@ impl Store {
                             .unwrap_or_default();
                     }
                 }
-                Field { key, value, source }
+                Field {
+                    key,
+                    value,
+                    source,
+                    from,
+                }
             })
             .collect())
     }
@@ -262,6 +280,14 @@ fn decor_prefix(t: &Table, key: &str) -> Option<String> {
     decor.prefix()?.as_str().map(str::to_string)
 }
 
+fn set_prefix(t: &mut Table, key: &str, prefix: &str) {
+    if let Some(Item::Table(sub)) = t.get_mut(key) {
+        sub.decor_mut().set_prefix(prefix);
+    } else if let Some(mut k) = t.key_mut(key) {
+        k.leaf_decor_mut().set_prefix(prefix);
+    }
+}
+
 // toml_edit stores a comment as part of the line below it, so removing that
 // line would drop e.g. a file header. Hand such comments to the next entry.
 fn remove_keeping_comments(t: &mut Table, key: &str) {
@@ -300,6 +326,35 @@ fn edit_doc(doc: &mut DocumentMut, key: &str, new: Option<&str>) -> Result<()> {
                 doc["dpi"] = value(d);
             }
             None => remove_keeping_comments(doc.as_table_mut(), "dpi"),
+        },
+        None if key == "extends" => match new {
+            Some(v) => {
+                let root = doc.as_table_mut();
+                if let Some(item) = root.get_mut("extends") {
+                    *item = value(v);
+                } else {
+                    // A new extends goes first, below the file's header comment.
+                    let first = root.iter().next().map(|(k, _)| k.to_string());
+                    let header = first
+                        .as_deref()
+                        .and_then(|k| decor_prefix(root, k))
+                        .filter(|p| p.contains('#'));
+                    let rest: Vec<(Key, Item)> = root
+                        .iter()
+                        .map(|(k, i)| (root.key(k).cloned().expect("key exists"), i.clone()))
+                        .collect();
+                    root.clear();
+                    root.insert("extends", value(v));
+                    for (k, i) in rest {
+                        root.insert_formatted(&k, i);
+                    }
+                    if let (Some(h), Some(first)) = (header, first) {
+                        set_prefix(root, "extends", &h);
+                        set_prefix(root, &first, "\n");
+                    }
+                }
+            }
+            None => remove_keeping_comments(doc.as_table_mut(), "extends"),
         },
         None if key == "polling-rate" => match new {
             Some(v) => {
@@ -367,6 +422,38 @@ mod tests {
     use super::*;
 
     #[test]
+    fn set_extends() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::at(dir.path());
+        fs::create_dir_all(&store.profiles_dir).unwrap();
+        fs::write(store.profiles_dir.join("base.toml"), "dpi = 6\n").unwrap();
+        fs::write(
+            store.profiles_dir.join("game.toml"),
+            "# my game\n\n[buttons]\nthumb-bottom = \"key:g\"\n",
+        )
+        .unwrap();
+        store.set_field("game", "extends", Some("base")).unwrap();
+        let text = fs::read_to_string(store.profiles_dir.join("game.toml")).unwrap();
+        assert!(
+            text.starts_with("# my game\n\nextends = \"base\"\n\n[buttons]"),
+            "{text}"
+        );
+        let f = store.fields("game").unwrap();
+        let dpi = f.iter().find(|x| x.key == "dpi").unwrap();
+        assert_eq!(
+            (dpi.value.as_str(), dpi.from.as_deref()),
+            ("6", Some("base"))
+        );
+        assert!(store.set_field("game", "extends", Some("game")).is_err());
+        assert!(store.set_field("game", "extends", Some("missing")).is_err());
+        store.set_field("game", "extends", Some("factory")).unwrap();
+        store.set_field("game", "extends", None).unwrap();
+        let text = fs::read_to_string(store.profiles_dir.join("game.toml")).unwrap();
+        assert!(text.starts_with("# my game\n"), "{text}");
+        assert!(!text.contains("extends"), "{text}");
+    }
+
+    #[test]
     fn polling_rate_and_sensitivity() {
         let dir = tempfile::tempdir().unwrap();
         let store = Store::at(dir.path());
@@ -425,10 +512,16 @@ mod tests {
             Field {
                 key: "dpi".into(),
                 value: "3".into(),
-                source: Source::Inherited
+                source: Source::Inherited,
+                from: Some("default".into()),
             }
         );
         assert_eq!(get(&f, "buttons.left").source, Source::Default);
+        assert_eq!(get(&f, "extends").value, "default");
+        assert_eq!(
+            get(&store.fields("default").unwrap(), "extends").source,
+            Source::Default
+        );
         assert_eq!(get(&f, "buttons.left").value, "left-click");
 
         store

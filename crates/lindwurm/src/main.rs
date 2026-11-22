@@ -63,10 +63,11 @@ fn run(args: &[String]) -> Result<()> {
             println!("{:<20} {}", "profile", p.name);
             for f in store.fields(profile)? {
                 let note = match f.source {
-                    Source::Own => "",
-                    Source::Inherited => "  (inherited)",
-                    Source::Default if f.value.is_empty() => "unchanged",
-                    Source::Default => "  (default)",
+                    Source::Own => String::new(),
+                    Source::Inherited => format!("  (from {})", f.from.as_deref().unwrap_or("?")),
+                    Source::Default if f.key == "extends" => "none".into(),
+                    Source::Default if f.value.is_empty() => "unchanged".into(),
+                    Source::Default => "  (default)".into(),
                 };
                 println!("{:<20} {}{note}", f.key, f.value);
             }
