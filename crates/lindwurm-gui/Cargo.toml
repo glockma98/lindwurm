@@ -14,6 +14,6 @@ description = "Graphical interface of lindwurm, a configuration tool for Holtek 
 workspace = true
 
 [dependencies]
-lindwurm-core = { path = "../lindwurm-core", version = "0.2.1" }
+lindwurm-core = { path = "../lindwurm-core", version = "0.2.2" }
 eframe = "0.37.0"
 rfd = "0.18.0"

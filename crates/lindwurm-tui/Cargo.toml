@@ -15,5 +15,5 @@ workspace = true
 
 [dependencies]
 crossterm = "0.29.0"
-lindwurm-core = { path = "../lindwurm-core", version = "0.2.1" }
+lindwurm-core = { path = "../lindwurm-core", version = "0.2.2" }
 ratatui = "0.30.2"
