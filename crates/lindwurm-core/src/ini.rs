@@ -1,7 +1,7 @@
 //! Import of Mouse.ini from the vendor's Windows software.
 //!
-//! Each of the five [GROUPn] sections is one profile; a profile exported by
-//! the vendor software (*.conf) has the same keys in a single [Profile]
+//! Each of the five `[GROUPn]` sections is one profile; a profile exported by
+//! the vendor software (`*.conf`) has the same keys in a single `[Profile]`
 //! section. ButtonAssigned1-11 are 84-byte records in hex: CC, function type,
 //! step count, 26 entries of [flags/delay, usage, unused], and a checksum byte
 //! (sum of the others).

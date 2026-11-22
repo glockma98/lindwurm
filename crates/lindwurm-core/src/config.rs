@@ -252,7 +252,7 @@ pub fn canonical_action(name: &str) -> &str {
 }
 
 /// HID consumer page usages with a Linux keycode in hid-input. The device
-/// passes all 16 bits (verified with 0x0192 -> KEY_CALC); its descriptor
+/// passes all 16 bits (verified with 0x0192 -> `KEY_CALC`); its descriptor
 /// allows up to 0x2FFF.
 pub const CONSUMER_CODES: &[(&str, u16)] = &[
     ("play-pause", 0x0CD),

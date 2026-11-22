@@ -1,5 +1,5 @@
 //! Field-level view and editing of profiles, shared by the TUI and GUI.
-//! Edits go through toml_edit so comments and layout of the file survive.
+//! Edits go through `toml_edit` so comments and layout of the file survive.
 
 use std::fs;
 
@@ -21,8 +21,9 @@ pub enum Source {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Field {
-    /// "extends", "dpi", "polling-rate", "sensitivity.x", "sensitivity.y", "led.color",
-    /// "led.brightness", "led.effect", "buttons.<name>" or "macros.<name>".
+    /// `extends`, `dpi`, `polling-rate`, `sensitivity.x`, `sensitivity.y`,
+    /// `led.color`, `led.brightness`, `led.effect`, `buttons.<name>` or
+    /// `macros.<name>`.
     pub key: String,
     pub value: String,
     pub source: Source,
@@ -192,7 +193,7 @@ impl Store {
         Ok(())
     }
 
-    /// Writes the profiles of a vendor Mouse.ini as <prefix>-1 .. <prefix>-5.
+    /// Writes the profiles of a vendor Mouse.ini as `<prefix>-1` .. `<prefix>-5`.
     /// Nothing is written if any of the names already exists.
     pub fn import_ini(
         &self,
