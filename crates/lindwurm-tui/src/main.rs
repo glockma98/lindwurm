@@ -786,6 +786,18 @@ impl App {
         let dim = Style::new().fg(Color::DarkGray);
         let hl = Style::new().add_modifier(Modifier::REVERSED);
         let accent = Style::new().fg(Color::Cyan);
+        // The profile stays marked while its fields are edited; the field
+        // cursor only shows while the fields have the focus.
+        let p_hl = if self.focus == Focus::Profiles {
+            hl
+        } else {
+            Style::new().add_modifier(Modifier::BOLD)
+        };
+        let f_hl = if self.focus == Focus::Fields {
+            hl
+        } else {
+            Style::new()
+        };
         let no_modal = self.modals.is_empty();
 
         let items: Vec<ListItem> = self
@@ -809,7 +821,7 @@ impl App {
         };
         let list = List::new(items)
             .block(Block::bordered().title(" profiles ").border_style(pborder))
-            .highlight_style(hl);
+            .highlight_style(p_hl);
         f.render_stateful_widget(list, left, &mut self.plist);
 
         let rows: Vec<ListItem> = self
@@ -845,7 +857,7 @@ impl App {
                     .title_bottom(" ↑ inherited · grey = default ")
                     .border_style(fborder),
             )
-            .highlight_style(hl);
+            .highlight_style(f_hl);
         f.render_stateful_widget(fields, right, &mut self.flist);
 
         let (first, help) = self.status_lines();
