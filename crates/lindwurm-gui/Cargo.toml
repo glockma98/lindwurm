@@ -2,12 +2,16 @@
 name = "lindwurm-gui"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 readme.workspace = true
 repository.workspace = true
 keywords.workspace = true
 categories.workspace = true
 description = "Graphical interface of lindwurm, a configuration tool for Holtek 04d9:a067 gaming mice"
+
+[lints]
+workspace = true
 
 [dependencies]
 lindwurm-core = { path = "../lindwurm-core", version = "0.2.1" }

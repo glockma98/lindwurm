@@ -318,7 +318,7 @@ pub fn format_applied(secs: u64) -> String {
     let days = secs / 86400;
     let (h, mi, s) = (secs % 86400 / 3600, secs % 3600 / 60, secs % 60);
     // Civil-from-days (Howard Hinnant), valid for the Unix era.
-    let z = days as i64 + 719_468;
+    let z = i64::try_from(days).unwrap_or(0) + 719_468;
     let era = z.div_euclid(146_097);
     let doe = z - era * 146_097;
     let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146_096) / 365;

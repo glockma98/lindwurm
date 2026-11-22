@@ -489,8 +489,14 @@ impl App {
             }
             Prompt::Import => {
                 // "path [prefix]"; a last word counts as prefix unless it looks like a path.
+                let looks_like_path = |x: &str| {
+                    x.contains(['/', '\\'])
+                        || std::path::Path::new(x).extension().is_some_and(|e| {
+                            e.eq_ignore_ascii_case("ini") || e.eq_ignore_ascii_case("conf")
+                        })
+                };
                 let (path, prefix) = match input.rsplit_once(' ') {
-                    Some((p, x)) if !x.contains('/') && !x.ends_with(".ini") => (p.trim(), x),
+                    Some((p, x)) if !looks_like_path(x) => (p.trim(), x),
                     _ => (input.as_str(), "ini"),
                 };
                 let path = match path.strip_prefix("~/") {

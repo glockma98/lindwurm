@@ -5,8 +5,17 @@ members = ["crates/lindwurm-core", "crates/lindwurm", "crates/lindwurm-tui", "cr
 [workspace.package]
 version = "0.2.1"
 edition = "2021"
+# eframe 0.37 needs 1.95.
+rust-version = "1.95"
 license = "MIT"
 repository = "https://github.com/glockma98/lindwurm"
 readme = "README.md"
 keywords = ["mouse", "hid", "holtek", "macro", "gaming-mouse"]
 categories = ["command-line-utilities", "hardware-support"]
+
+# A few pedantic lints that catch real mistakes; the whole group is too noisy.
+[workspace.lints.clippy]
+case_sensitive_file_extension_comparisons = "warn"
+cast_possible_wrap = "warn"
+cast_sign_loss = "warn"
+doc_markdown = "warn"

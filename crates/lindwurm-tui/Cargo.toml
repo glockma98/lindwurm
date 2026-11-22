@@ -2,12 +2,16 @@
 name = "lindwurm-tui"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 readme.workspace = true
 repository.workspace = true
 keywords.workspace = true
 categories.workspace = true
 description = "Terminal interface of lindwurm, a configuration tool for Holtek 04d9:a067 gaming mice"
+
+[lints]
+workspace = true
 
 [dependencies]
 crossterm = "0.29.0"
