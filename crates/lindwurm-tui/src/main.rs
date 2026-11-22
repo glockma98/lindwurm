@@ -2,7 +2,7 @@ use std::process::ExitCode;
 
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use lindwurm_core::config::{
-    check_macro, MacroConfig, ACTIONS, CONSUMER_CODES, LED_BRIGHTNESS, LED_EFFECT,
+    action_fits, check_macro, MacroConfig, ACTIONS, CONSUMER_CODES, LED_BRIGHTNESS, LED_EFFECT,
 };
 use lindwurm_core::device::Device;
 use lindwurm_core::edit::{macro_value, parse_macro_value, Field, Source};
@@ -324,8 +324,10 @@ impl App {
                 target,
             )),
             k if k.starts_with("buttons.") => {
+                let button = k.strip_prefix("buttons.").unwrap_or(k);
                 let mut items: Vec<(String, Pick)> = ACTIONS
                     .iter()
+                    .filter(|(a, _)| action_fits(button, a))
                     .map(|(a, _)| (a.to_string(), Pick::Set(Some(a.to_string()))))
                     .collect();
                 items.push(("key …".into(), Pick::Keys));

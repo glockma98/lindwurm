@@ -7,7 +7,9 @@ use std::sync::mpsc::{channel, Receiver};
 use std::thread;
 
 use eframe::egui;
-use lindwurm_core::config::{parse_color, ACTIONS, CONSUMER_CODES, LED_BRIGHTNESS, LED_EFFECT};
+use lindwurm_core::config::{
+    action_fits, parse_color, ACTIONS, CONSUMER_CODES, LED_BRIGHTNESS, LED_EFFECT,
+};
 use lindwurm_core::device::Device;
 use lindwurm_core::edit::{Field, Source};
 use lindwurm_core::profile::Store;
@@ -339,7 +341,8 @@ impl App {
             .collect();
         let mut pick = None;
         ui.menu_button("▾", |ui| {
-            for (a, _) in ACTIONS {
+            let button = f.key.strip_prefix("buttons.").unwrap_or(&f.key);
+            for (a, _) in ACTIONS.iter().filter(|(a, _)| action_fits(button, a)) {
                 if ui.button(*a).clicked() {
                     pick = Some(a.to_string());
                 }

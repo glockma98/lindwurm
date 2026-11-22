@@ -170,6 +170,9 @@ the polling rate makes the mouse reconnect for a moment.
   `dpi-up`, `dpi-down`, `led-switch`, `double-click`, media keys, `none`, and
   the vendor software's shortcuts (`copy`, `paste`, `lock-pc`, …).
   The vendor's names (`click`, `menu`, `disable`, …) work as well.
+- `scroll` and `none` are both stored as an empty slot, which scrolls on the
+  wheel and disables a button. So `scroll` works only on `wheel-up` and
+  `wheel-down`, `none` only on buttons; the wheel cannot be disabled.
 - `key:<name>`: a single key, e.g. `key:g`, `key:f5`, `key:0x0a`.
 - `consumer:<name>`: media and system keys, e.g. `consumer:calculator`, or any
   HID consumer usage as `consumer:0x0192`.

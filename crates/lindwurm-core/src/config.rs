@@ -216,6 +216,29 @@ pub const ACTIONS: &[(&str, Slot)] = &[
 
 const HOST_SIDE: &[&str] = &["scroll-left", "scroll-right", "profile-switch"];
 
+/// "scroll" and "none" both write an empty slot: the firmware scrolls on an
+/// empty wheel slot but leaves an empty button slot dead (verified on a
+/// Drakonia Black). Each name is only allowed where it describes the effect.
+pub fn action_fits(button: &str, action: &str) -> bool {
+    let wheel = matches!(button, "wheel-up" | "wheel-down");
+    match canonical_action(action) {
+        "scroll" => wheel,
+        "none" => !wheel,
+        _ => true,
+    }
+}
+
+fn misfit(button: &str, action: &str) -> String {
+    match canonical_action(action) {
+        "scroll" => format!(
+            "button {button}: \"scroll\" only works on wheel-up and wheel-down; use \"none\" to disable a button"
+        ),
+        _ => format!(
+            "button {button}: the wheel cannot be disabled (an empty slot scrolls); use \"scroll\" or another action"
+        ),
+    }
+}
+
 /// Alternative action names, following the vendor software.
 pub const ACTION_ALIASES: &[(&str, &str)] = &[
     ("click", "left-click"),
@@ -335,6 +358,9 @@ pub fn build_layout(c: &Config) -> Result<Layout> {
     for (name, slot, default) in BUTTONS {
         let own = c.buttons.get(*name).map(String::as_str);
         let action = canonical_action(own.unwrap_or(default));
+        if !action_fits(name, action) {
+            return Err(err!("{}", misfit(name, action)));
+        }
         let s = resolve_action(action, c, &mut l, &mut macro_index)
             .map_err(|e| err!("button {name}: {e}"))?;
         l.slots[*slot] = s;
@@ -378,6 +404,11 @@ fn resolve_action(
     }
     if let Some(k) = action.strip_prefix("key:") {
         let code = key_code(k).ok_or_else(|| err!("unknown key {k:?}"))?;
+        if code == 0 {
+            return Err(err!(
+                "key code 0 is no key; use \"none\" to disable a button"
+            ));
+        }
         return Ok([0x00, code, 0, 0]);
     }
     if let Some((name, steps)) = BUILTIN_MACROS.iter().find(|(n, _)| *n == action) {
@@ -542,6 +573,10 @@ pub fn action_help() -> String {
             .collect();
         let host = if HOST_SIDE.contains(n) {
             "  (needs a host-side handler)"
+        } else if *n == "scroll" {
+            "  (wheel-up and wheel-down only)"
+        } else if *n == "none" {
+            "  (buttons only; the wheel cannot be disabled)"
         } else {
             ""
         };
@@ -648,10 +683,15 @@ mod tests {
             cfg(&[("left", "consumer:nope")], &[]),
             cfg(&[("left", "consumer:0x0")], &[]),
             cfg(&[("left", "raw:0400")], &[]),
+            cfg(&[("right", "scroll")], &[]),
+            cfg(&[("wheel-down", "none")], &[]),
+            cfg(&[("wheel-down", "disable")], &[]),
+            cfg(&[("left", "key:0x00")], &[]),
         ];
         for (i, c) in bad.iter().enumerate() {
             assert!(build_layout(c).is_err(), "case {i} should fail");
         }
+        assert!(build_layout(&cfg(&[("wheel-up", "scroll")], &[])).is_ok());
         assert!(Config::parse("dpi = 9").is_err());
         assert!(Config::parse("unknown = 1").is_err());
     }
