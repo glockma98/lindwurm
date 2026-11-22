@@ -149,18 +149,37 @@ impl App {
         let Some(name) = self.selected.clone() else {
             return;
         };
-        if ui
-            .add_enabled(!busy, egui::Button::new(format!("Apply {name}")))
-            .clicked()
-        {
+        let mut quick = None;
+        ui.horizontal(|ui| {
+            if ui
+                .add_enabled(!busy, egui::Button::new(format!("Apply {name}")))
+                .clicked()
+            {
+                quick = Some(false);
+            }
+            if ui
+                .add_enabled(!busy, egui::Button::new("Quick"))
+                .on_hover_text(
+                    "Skip buttons and macros if they match the last write from this \
+                     computer. Use Apply after the mouse was set up elsewhere.",
+                )
+                .clicked()
+            {
+                quick = Some(true);
+            }
+        });
+        if let Some(quick) = quick {
             let store = self.store.clone();
             let n = name.clone();
             self.spawn(
                 ui.ctx(),
                 format!("writing {name} …"),
-                move || match apply_profile(&store, &n) {
-                    Ok(p) if p.layout.warnings.is_empty() => format!("profile {n} written"),
-                    Ok(p) => format!(
+                move || match apply_profile(&store, &n, quick) {
+                    Ok((p, true)) if p.layout.warnings.is_empty() => {
+                        format!("profile {n} written (buttons and macros unchanged)")
+                    }
+                    Ok((p, _)) if p.layout.warnings.is_empty() => format!("profile {n} written"),
+                    Ok((p, _)) => format!(
                         "profile {n} written, warning: {}",
                         p.layout.warnings.join("; ")
                     ),

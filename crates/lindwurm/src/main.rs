@@ -9,7 +9,11 @@ use lindwurm_core::{apply_profile, status_text, Error, Result};
 
 const USAGE: &str = "usage: lindwurm <command> [args]
 
-  apply [profile]  write a profile (buttons, macros, DPI, LED, ...) to the mouse
+  apply [--quick] [profile]
+                   write a profile (buttons, macros, DPI, LED, ...) to the mouse;
+                   --quick skips buttons and macros if they match the last
+                   write from this computer (not if the mouse was written
+                   elsewhere since)
   show [profile]   show all settings, buttons and macros of a profile
   set <profile> <field> [value]
                    change a field (as listed by show); without value the
@@ -112,11 +116,20 @@ fn run(args: &[String]) -> Result<()> {
             store.delete_profile(profile)?;
         }
         Some("apply") => {
-            let p = apply_profile(&store, profile)?;
+            let quick = args.iter().any(|a| a == "--quick");
+            let name = args[1..]
+                .iter()
+                .find(|a| *a != "--quick")
+                .map(String::as_str)
+                .unwrap_or(&fallback);
+            let (p, skipped) = apply_profile(&store, name, quick)?;
             for w in &p.layout.warnings {
                 eprintln!("warning: {w}");
             }
-            println!("profile {} written", p.name);
+            match skipped {
+                true => println!("profile {} written (buttons and macros unchanged)", p.name),
+                false => println!("profile {} written", p.name),
+            }
         }
         Some("profiles") => {
             let active = store.active();

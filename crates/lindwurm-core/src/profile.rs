@@ -182,6 +182,20 @@ impl Store {
         }
     }
 
+    /// Whether buttons and macros equal the last write from this computer.
+    pub fn layout_unchanged(&self, l: &Layout) -> bool {
+        let Ok(Some(state)) = self.read_state() else {
+            return false;
+        };
+        let table = |s: &str| -> Vec<String> {
+            s.lines()
+                .filter(|l| l.starts_with("slot ") || l.starts_with("macro "))
+                .map(str::to_string)
+                .collect()
+        };
+        table(&state) == table(&describe_layout(l, &button_slots()))
+    }
+
     /// Polling rate set by the last write, if any.
     pub fn applied_polling_rate(&self) -> Option<u16> {
         let s = self.read_state().ok()??;
@@ -359,6 +373,30 @@ mod tests {
         assert!(store.load("loop-a").is_err());
         assert!(store.load("missing").is_err());
         assert!(store.resolve("bad name").is_err());
+    }
+
+    #[test]
+    fn layout_unchanged() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::at(dir.path());
+        fs::create_dir_all(&store.profiles_dir).unwrap();
+        let write = |n: &str, body: &str| {
+            fs::write(store.profiles_dir.join(format!("{n}.toml")), body).unwrap()
+        };
+        write(
+            "a",
+            "dpi = 2\n[buttons]\nside-right = \"macro:m\"\n[macros.m]\nsteps = [\"x\"]\n",
+        );
+        write(
+            "b",
+            "extends = \"a\"\ndpi = 6\n[led]\ncolor = \"#ff0000\"\n",
+        );
+        write("c", "extends = \"a\"\n[macros.m]\nsteps = [\"y\"]\n");
+        let a = store.prepare("a").unwrap();
+        assert!(!store.layout_unchanged(&a.layout), "nothing written yet");
+        store.write_state(&a.name, &a.config, &a.layout).unwrap();
+        assert!(store.layout_unchanged(&store.prepare("b").unwrap().layout));
+        assert!(!store.layout_unchanged(&store.prepare("c").unwrap().layout));
     }
 
     #[test]

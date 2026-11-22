@@ -77,24 +77,24 @@ Or start `lindwurm-gui` / `lindwurm-tui`, pick a profile, edit it and apply it.
 
 ## Interfaces
 
-**GUI** (`lindwurm-gui`): profiles on the left with *Apply*, *Clone*, *Delete*
-and *Import Mouse.ini* (also takes `.conf` exports); every setting of the
-selected profile on the right, with menus for actions, keys, consumer keys
-and macros, and a color picker for the LED. Each field shows whether its
+**GUI** (`lindwurm-gui`): profiles on the left with *Apply*, *Quick*, *Clone*,
+*Delete* and *Import Mouse.ini* (also takes `.conf` exports); every setting of
+the selected profile on the right, with menus for actions, keys, consumer
+keys and macros, and a color picker for the LED. Each field shows whether its
 value is set in the profile, inherited (and from which profile), or the
 factory default; `extends` picks the profile to build on.
 
 **TUI** (`lindwurm-tui`): the same in a terminal. `Tab` switches between the
 profile list and the fields. On a field, `Enter` opens a picker (type to
 filter) or, for macros, the macro builder; `e` edits the raw text, `x` resets
-it. In the profile list: `Enter` apply, `c` clone, `D` delete, `i` import,
-`1`-`7` set the DPI level.
+it. In the profile list: `Enter` apply, `a` quick apply, `c` clone, `D` delete,
+`i` import, `1`-`7` set the DPI level.
 
 **CLI** (`lindwurm`):
 
 | Command | |
 |---|---|
-| `apply [profile]` | write a profile to the mouse |
+| `apply [--quick] [profile]` | write a profile to the mouse |
 | `show [profile]` | show all settings of a profile |
 | `check [profile]` | validate and print the raw bytes, write nothing |
 | `profiles` | list profiles, `*` marks the one written last |
@@ -108,6 +108,12 @@ it. In the profile list: `Enter` apply, `c` clone, `D` delete, `i` import,
 | `buttons` / `actions` | list button names and actions |
 | `udev-rule` | print the Linux udev rule |
 | `version` | print the version |
+
+Writing buttons and macros takes about a second. A quick apply (`--quick`,
+*Quick*, `a`) skips them when they match the last write from this computer and
+only sends the settings, which takes a fraction of a second. lindwurm cannot
+read the mouse, so use a normal apply after the mouse was set up on another
+computer.
 
 Switching profiles from a hotkey is a matter of running `lindwurm apply <name>`.
 

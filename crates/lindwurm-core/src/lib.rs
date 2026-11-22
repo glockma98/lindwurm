@@ -37,10 +37,22 @@ impl From<hidapi::HidError> for Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Loads a profile, writes it to the mouse and records it as applied.
-pub fn apply_profile(store: &profile::Store, arg: &str) -> Result<profile::Prepared> {
+///
+/// Writing buttons and macros takes most of the time. With `quick` they are
+/// skipped when they match the last write from this computer; that record
+/// is wrong if the mouse was written elsewhere since, so it is opt-in. The
+/// returned flag tells whether they were skipped.
+pub fn apply_profile(
+    store: &profile::Store,
+    arg: &str,
+    quick: bool,
+) -> Result<(profile::Prepared, bool)> {
     let p = store.prepare(arg)?;
     let dev = device::Device::open()?;
-    dev.write_layout(&p.layout)?;
+    let skip = quick && store.layout_unchanged(&p.layout);
+    if !skip {
+        dev.write_layout(&p.layout)?;
+    }
     if let Some(dpi) = p.config.dpi {
         dev.set_dpi(dpi)?;
     }
@@ -60,7 +72,7 @@ pub fn apply_profile(store: &profile::Store, arg: &str) -> Result<profile::Prepa
     if let Some(r) = rate {
         dev.set_polling_rate(r)?;
     }
-    Ok(p)
+    Ok((p, skip))
 }
 
 /// The state file with its timestamp made readable.

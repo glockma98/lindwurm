@@ -699,7 +699,8 @@ impl App {
                 self.plist.select_previous();
                 self.load_fields();
             }
-            (KeyCode::Enter, Focus::Profiles) => self.apply_selected(terminal),
+            (KeyCode::Enter, Focus::Profiles) => self.apply_selected(terminal, false),
+            (KeyCode::Char('a'), Focus::Profiles) => self.apply_selected(terminal, true),
             (KeyCode::Char('i'), Focus::Profiles) => self
                 .modals
                 .push(Modal::Prompt(Prompt::Import, String::new())),
@@ -747,14 +748,17 @@ impl App {
         true
     }
 
-    fn apply_selected(&mut self, terminal: &mut DefaultTerminal) {
+    fn apply_selected(&mut self, terminal: &mut DefaultTerminal, quick: bool) {
         let Some(name) = self.selected() else { return };
         self.message = format!("writing {name} …");
         // Writing takes about two seconds; show the message before blocking.
         let _ = terminal.draw(|f| self.draw(f));
-        self.message = match apply_profile(&self.store, &name) {
-            Ok(p) if p.layout.warnings.is_empty() => format!("profile {name} written"),
-            Ok(p) => format!(
+        self.message = match apply_profile(&self.store, &name, quick) {
+            Ok((p, true)) if p.layout.warnings.is_empty() => {
+                format!("profile {name} written (buttons and macros unchanged)")
+            }
+            Ok((p, _)) if p.layout.warnings.is_empty() => format!("profile {name} written"),
+            Ok((p, _)) => format!(
                 "profile {name} written, warning: {}",
                 p.layout.warnings.join("; ")
             ),
@@ -792,7 +796,7 @@ impl App {
                 self.message.clone(),
                 match self.focus {
                     Focus::Profiles => {
-                        "enter apply · c clone · D delete · i import ini · 1-7 dpi · tab fields · r reload · q quit".into()
+                        "enter apply · a quick apply · c clone · D delete · i import ini · 1-7 dpi · tab fields · r reload · q quit".into()
                     }
                     Focus::Fields => {
                         "enter choose · e edit text · x reset · a new macro · tab profiles · q quit".into()
