@@ -10,5 +10,5 @@ description = "Terminal interface of lindwurm, a configuration tool for Holtek 0
 
 [dependencies]
 crossterm = "0.29.0"
-lindwurm-core = { path = "../lindwurm-core", version = "0.1.0" }
+lindwurm-core = { path = "../lindwurm-core", version = "0.2.0" }
 ratatui = "0.30.2"

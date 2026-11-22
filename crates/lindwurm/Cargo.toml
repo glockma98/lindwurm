@@ -9,4 +9,4 @@ categories.workspace = true
 description = "Command line tool to configure buttons, macros, DPI and LED of Holtek 04d9:a067 gaming mice"
 
 [dependencies]
-lindwurm-core = { path = "../lindwurm-core", version = "0.1.0" }
+lindwurm-core = { path = "../lindwurm-core", version = "0.2.0" }
