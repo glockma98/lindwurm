@@ -21,8 +21,8 @@ pub enum Source {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Field {
-    /// "dpi", "led.color", "led.brightness", "led.effect", "buttons.<name>"
-    /// or "macros.<name>".
+    /// "dpi", "polling-rate", "sensitivity.x", "sensitivity.y", "led.color",
+    /// "led.brightness", "led.effect", "buttons.<name>" or "macros.<name>".
     pub key: String,
     pub value: String,
     pub source: Source,
@@ -66,6 +66,17 @@ fn entries(c: &Config) -> Vec<(String, String)> {
             v.push((k.into(), x.clone()));
         }
     }
+    if let Some(p) = c.polling_rate {
+        v.push(("polling-rate".into(), p.to_string()));
+    }
+    for (k, x) in [
+        ("sensitivity.x", c.sensitivity.x),
+        ("sensitivity.y", c.sensitivity.y),
+    ] {
+        if let Some(x) = x {
+            v.push((k.into(), x.to_string()));
+        }
+    }
     for (b, a) in &c.buttons {
         v.push((format!("buttons.{b}"), a.clone()));
     }
@@ -92,10 +103,18 @@ impl Store {
             }
             (String::new(), Source::Default)
         };
-        let mut keys: Vec<String> = ["dpi", "led.color", "led.brightness", "led.effect"]
-            .iter()
-            .map(|s| s.to_string())
-            .collect();
+        let mut keys: Vec<String> = [
+            "dpi",
+            "polling-rate",
+            "sensitivity.x",
+            "sensitivity.y",
+            "led.color",
+            "led.brightness",
+            "led.effect",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
         keys.extend(BUTTONS.iter().map(|(n, _, _)| format!("buttons.{n}")));
         keys.extend(
             merged
@@ -282,6 +301,27 @@ fn edit_doc(doc: &mut DocumentMut, key: &str, new: Option<&str>) -> Result<()> {
             }
             None => remove_keeping_comments(doc.as_table_mut(), "dpi"),
         },
+        None if key == "polling-rate" => match new {
+            Some(v) => {
+                let hz: u16 = v
+                    .parse()
+                    .map_err(|_| err!("polling rate must be a number in Hz"))?;
+                doc["polling-rate"] = value(i64::from(hz));
+            }
+            None => remove_keeping_comments(doc.as_table_mut(), "polling-rate"),
+        },
+        Some(("sensitivity", axis @ ("x" | "y"))) => {
+            let t = table(doc, "sensitivity");
+            match new {
+                Some(v) => {
+                    let s: u8 = v
+                        .parse()
+                        .map_err(|_| err!("sensitivity must be from 1 to 10"))?;
+                    t[axis] = value(i64::from(s));
+                }
+                None => remove_keeping_comments(t, axis),
+            }
+        }
         Some(("buttons", name)) => {
             let name = canonical_button(name);
             let t = table(doc, "buttons");
@@ -325,6 +365,45 @@ fn edit_doc(doc: &mut DocumentMut, key: &str, new: Option<&str>) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn polling_rate_and_sensitivity() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::at(dir.path());
+        fs::create_dir_all(&store.profiles_dir).unwrap();
+        fs::write(
+            store.profiles_dir.join("base.toml"),
+            "polling-rate = 1000\n[sensitivity]\nx = 4\n",
+        )
+        .unwrap();
+        fs::write(store.profiles_dir.join("game.toml"), "extends = \"base\"\n").unwrap();
+        store.set_field("game", "sensitivity.y", Some("7")).unwrap();
+        store
+            .set_field("game", "polling-rate", Some("250"))
+            .unwrap();
+        assert!(store
+            .set_field("game", "polling-rate", Some("300"))
+            .is_err());
+        assert!(store
+            .set_field("game", "sensitivity.x", Some("11"))
+            .is_err());
+        let p = store.prepare("game").unwrap();
+        assert_eq!(p.config.polling_rate, Some(250));
+        assert_eq!(
+            (p.config.sensitivity.x, p.config.sensitivity.y),
+            (Some(4), Some(7))
+        );
+        let text = fs::read_to_string(store.profiles_dir.join("game.toml")).unwrap();
+        assert!(
+            text.starts_with("extends = \"base\"\npolling-rate = 250\n"),
+            "{text}"
+        );
+        store.set_field("game", "polling-rate", None).unwrap();
+        assert_eq!(
+            store.prepare("game").unwrap().config.polling_rate,
+            Some(1000)
+        );
+    }
 
     #[test]
     fn edit_clone_delete() {

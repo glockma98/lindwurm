@@ -173,6 +173,8 @@ fn centered(area: Rect, w: u16, h: u16) -> Rect {
 fn edit_hint(key: &str) -> String {
     match key {
         "dpi" => "1-7, empty = unchanged".into(),
+        "polling-rate" => "1000 500 250 125 (Hz), empty = unchanged".into(),
+        k if k.starts_with("sensitivity.") => "1-10 (10 = unscaled), empty = unchanged".into(),
         "led.color" => "#rrggbb, empty = unchanged".into(),
         "led.brightness" => format!("{}, empty = unchanged", LED_BRIGHTNESS.join(" ")),
         "led.effect" => format!("{}, empty = unchanged", LED_EFFECT.join(" ")),
@@ -299,6 +301,16 @@ impl App {
                 target,
             )),
             "led.effect" => Modal::Picker(Picker::new("LED effect", choice(LED_EFFECT), target)),
+            "polling-rate" => Modal::Picker(Picker::new(
+                "Polling rate (Hz)",
+                choice(&["1000", "500", "250", "125"]),
+                target,
+            )),
+            k if k.starts_with("sensitivity.") => Modal::Picker(Picker::new(
+                "Sensitivity",
+                choice(&["10", "9", "8", "7", "6", "5", "4", "3", "2", "1"]),
+                target,
+            )),
             k if k.starts_with("buttons.") => {
                 let mut items: Vec<(String, Pick)> = ACTIONS
                     .iter()

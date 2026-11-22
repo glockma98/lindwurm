@@ -1,6 +1,6 @@
 //! Import of Mouse.ini from the vendor's Windows software.
 //!
-//! Each of the five [GROUPn] sections is one profile; a profile exported by
+//! Each of the five [GROUPn] sections is one profi            led.is_empty() && buttons.is_empty() && sensitivity.is_empty() && settings.is_empty();e; a profile exported by
 //! the vendor software (*.conf) has the same keys in a single [Profile]
 //! section. ButtonAssigned1-11 are
 //! 84-byte records in hex: CC, function type, step count, 26 entries of
@@ -11,7 +11,7 @@
 
 use std::collections::BTreeMap;
 
-use crate::config::{build_layout, Config, BUTTONS, LED_BRIGHTNESS};
+use crate::config::{build_layout, Config, BUTTONS, LED_BRIGHTNESS, LED_EFFECT};
 use crate::keys::key_name;
 use crate::{err, Result};
 
@@ -190,18 +190,29 @@ pub fn import(text: &str, source: &str) -> Result<Vec<Imported>> {
         }
         if let Some(f) = group_value(group, "FlashState") {
             if (1..=4).contains(&f) && f != u32::from(FACTORY_FLASH_STATE) {
-                led += &format!("effect     = \"{f}\"   # FlashState={f}\n");
+                led += &format!(
+                    "effect     = {}   # FlashState={f}\n",
+                    quote(LED_EFFECT[f as usize - 1])
+                );
             }
         }
-        for key in [
-            "PollingRate",
-            "XYSensitivityEnabled",
-            "MouseSpeedX",
-            "MouseSpeedY",
-            "OFASensitivity",
-        ] {
-            if let Some(v) = group.get(key) {
-                settings += &format!("# {key}={v} (not supported by lindwurm yet)\n");
+        // The vendor software offers three rates and sends 04, 02 or 01.
+        if let Some(p) = group_value(group, "PollingRate") {
+            match [250, 500, 1000].get((p as usize).wrapping_sub(1)) {
+                Some(500) => {}
+                Some(hz) => settings += &format!("polling-rate = {hz}   # PollingRate={p}\n"),
+                None => warnings.push(format!("{sname} PollingRate={p} is unknown, left out")),
+            }
+        }
+        // MouseSpeedX/Y only reach the mouse with XYSensitivityEnabled=1.
+        let mut sensitivity = String::new();
+        if group_value(group, "XYSensitivityEnabled") == Some(1) {
+            for (axis, key) in [("x", "MouseSpeedX"), ("y", "MouseSpeedY")] {
+                if let Some(v) = group_value(group, key) {
+                    if (1..=9).contains(&v) {
+                        sensitivity += &format!("{axis} = {v}   # {key}={v}\n");
+                    }
+                }
             }
         }
 
@@ -285,6 +296,9 @@ pub fn import(text: &str, source: &str) -> Result<Vec<Imported>> {
         if !led.is_empty() {
             toml += &format!("\n[led]\n{led}");
         }
+        if !sensitivity.is_empty() {
+            toml += &format!("\n[sensitivity]\n{sensitivity}");
+        }
         if !buttons.is_empty() {
             toml += &format!("\n[buttons]\n{buttons}");
         }
@@ -294,7 +308,7 @@ pub fn import(text: &str, source: &str) -> Result<Vec<Imported>> {
             Config::parse(&toml).map_err(|e| err!("{sname}: generated profile is invalid: {e}"))?;
         build_layout(&c).map_err(|e| err!("{sname}: generated profile is invalid: {e}"))?;
         let same_as_factory =
-            led.is_empty() && buttons.is_empty() && !settings.lines().any(|l| l.starts_with("dpi"));
+            led.is_empty() && buttons.is_empty() && sensitivity.is_empty() && settings.is_empty();
         out.push(Imported {
             group: g,
             section: sname,
@@ -385,6 +399,25 @@ mod tests {
         let out = import(&ini(&[g]), "Mouse.ini").unwrap();
         assert!(out[0].warnings.is_empty(), "{:?}", out[0].warnings);
         assert!(out[0].same_as_factory, "{}", out[0].toml);
+    }
+
+    #[test]
+    fn polling_rate_and_sensitivity() {
+        let mut g = factory_group();
+        g.retain(|(k, _)| k != "PollingRate");
+        for (k, v) in [
+            ("PollingRate", "3"),
+            ("XYSensitivityEnabled", "1"),
+            ("MouseSpeedX", "4"),
+            ("MouseSpeedY", "10"),
+        ] {
+            g.push((k.into(), v.into()));
+        }
+        let out = import(&ini(&[g]), "Mouse.ini").unwrap();
+        let c = Config::parse(&out[0].toml).unwrap();
+        assert_eq!(c.polling_rate, Some(1000), "{}", out[0].toml);
+        assert_eq!((c.sensitivity.x, c.sensitivity.y), (Some(4), None));
+        assert!(!out[0].same_as_factory);
     }
 
     #[test]

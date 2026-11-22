@@ -1,6 +1,6 @@
 # lindwurm
 
-Configure buttons, macros, DPI and LED of gaming mice built on the Holtek
+Configure buttons, macros, DPI, polling rate, sensitivity and LED of gaming mice built on the Holtek
 `04d9:a067` controller, such as the **Sharkoon Drakonia Black**, without the
 vendor's Windows software. lindwurm comes as a command line tool, a terminal
 interface and a small graphical interface; all three share the same profiles.
@@ -16,7 +16,7 @@ layout on any computer.
 
 | Device | USB ID | Status |
 |---|---|---|
-| Sharkoon Drakonia Black | `04d9:a067` | buttons, macros, DPI and LED tested on Linux and Windows 11 |
+| Sharkoon Drakonia Black | `04d9:a067` | tested on Linux and Windows 11 |
 | Sharkoon Drakonia | `04d9:a067` | same vendor software, expected to work |
 | Perixx MX-2000 / MX-3000 | `04d9:a067` | same controller, untested |
 
@@ -102,6 +102,8 @@ it. In the profile list: `Enter` apply, `c` clone, `D` delete, `i` import,
 | `clone <from> <to>` / `delete <profile>` | manage profiles |
 | `import <file> [prefix]` | convert the vendor software's Mouse.ini or exported `.conf` |
 | `dpi <1-7>` | set the DPI level now |
+| `polling-rate <hz>` | set the polling rate now |
+| `sensitivity <x> [y]` | set the speed of each axis now |
 | `buttons` / `actions` | list button names and actions |
 | `udev-rule` | print the Linux udev rule |
 | `version` | print the version |
@@ -119,20 +121,36 @@ on another one with `extends` and only list what differs:
 ```toml
 extends = "factory"
 dpi = 5
+polling-rate = 1000
 
 [buttons]
-illumination = "macro:reload"     # the Illumination Key, also called side-right
+illumination = "macro:quick-swap" # the Illumination Key, also called side-right
 thumb-bottom = "consumer:browser-back"
-tilt-left    = "key:pageup"
+tilt-left    = "volume-down"
 
-[macros.reload]
-steps = ["r", "100ms", "r"]
+[macros.quick-swap]
+steps = ["q", "50ms", "q"]
 
 [led]
 color = "#ff8000"
 ```
 
 More examples are in [`examples/`](examples).
+
+### Settings
+
+| Setting | Values | Factory |
+|---|---|---|
+| `dpi` | level 1–7 | 3 |
+| `polling-rate` | 1000, 500, 250 or 125 (Hz) | 500 |
+| `[sensitivity]` `x`, `y` | 1–10 per axis, 10 is the unscaled speed | 10 |
+| `[led]` `color` | `"#rrggbb"` | `"#00ff00"` |
+| `[led]` `brightness` | `off`, `low`, `medium`, `high` | `high` |
+| `[led]` `effect` | `steady`, `slow`, `medium`, `fast` (pulsing) | `fast` |
+
+Settings a profile does not contain are left as they are on the mouse. A new
+polling rate makes the mouse reconnect for a moment, so lindwurm only sends it
+when it differs from the last written profile.
 
 ### Buttons
 
@@ -182,7 +200,6 @@ Profiles saved with the vendor software's export button (`*.conf`, by default
 - `scroll-left`, `scroll-right` and `profile-switch` (the factory setting of
   the wheel tilt) are only reports to the computer that the vendor's Windows
   service turned into actions; without it they do nothing.
-- Polling rate and sensitivity are known but not implemented yet.
 - Writing a profile rewrites the button table and all macro slots in the
   mouse's memory. Interrupted writes have so far always been fixed by
   replugging and writing again, but use it at your own risk.

@@ -3,11 +3,18 @@
 # Built into lindwurm as profile "factory"; clone it to make changes.
 
 dpi = 3                    # DPI=3
+polling-rate = 500         # PollingRate=2
 
 [led]
 color      = "#00ff00"     # LedColor=65280 (COLORREF, green)
 brightness = "high"        # LedState=4
 effect     = "fast"        # FlashState=4, fast pulse
+
+# MouseSpeedX/Y=10, only sent with XYSensitivityEnabled (0 here); 10 is the
+# unscaled speed.
+[sensitivity]
+x = 10
+y = 10
 
 [buttons]
 left         = "left-click"     # ButtonAssigned1:  Klicken

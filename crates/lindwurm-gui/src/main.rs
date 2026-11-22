@@ -371,6 +371,12 @@ impl App {
                         ui.label(&f.key);
                         match f.key.as_str() {
                             "dpi" => self.choice(ui, f, &["1", "2", "3", "4", "5", "6", "7"]),
+                            "polling-rate" => self.choice(ui, f, &["1000", "500", "250", "125"]),
+                            k if k.starts_with("sensitivity.") => self.choice(
+                                ui,
+                                f,
+                                &["10", "9", "8", "7", "6", "5", "4", "3", "2", "1"],
+                            ),
                             "led.brightness" => self.choice(ui, f, LED_BRIGHTNESS),
                             "led.effect" => self.choice(ui, f, LED_EFFECT),
                             "led.color" => {

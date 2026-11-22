@@ -1,7 +1,9 @@
-# Example game profile: higher DPI, game keys on the extra buttons and a red
-# LED that shows which profile is active. Switch with `lindwurm apply game`.
+# Example game profile: higher DPI and polling rate, game keys on the extra
+# buttons and a red LED that shows which profile is active. Switch with
+# `lindwurm apply game`.
 extends = "factory"
 dpi = 5
+polling-rate = 1000
 
 [buttons]
 # The thumb buttons stay back/forward (mouse buttons 4/5), which most games

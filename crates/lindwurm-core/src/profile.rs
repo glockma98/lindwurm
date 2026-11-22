@@ -156,6 +156,33 @@ impl Store {
         }
     }
 
+    /// Polling rate set by the last write, if any.
+    pub fn applied_polling_rate(&self) -> Option<u16> {
+        let s = self.read_state().ok()??;
+        s.lines()
+            .find_map(|l| l.strip_prefix("polling-rate ")?.trim().parse().ok())
+    }
+
+    /// Notes a polling rate set outside a profile write, so the next write
+    /// does not wrongly skip it.
+    pub fn record_polling_rate(&self, hz: u16) -> Result<()> {
+        let Some(s) = self.read_state()? else {
+            return Ok(());
+        };
+        let mut lines: Vec<String> = s
+            .lines()
+            .filter(|l| !l.starts_with("polling-rate "))
+            .map(str::to_string)
+            .collect();
+        let at = lines
+            .iter()
+            .position(|l| l.starts_with("slot "))
+            .unwrap_or(lines.len());
+        lines.insert(at, format!("polling-rate {hz}"));
+        fs::write(self.state_dir.join("applied"), lines.join("\n") + "\n")?;
+        Ok(())
+    }
+
     pub fn active(&self) -> Option<String> {
         let s = self.read_state().ok()??;
         s.lines()
@@ -209,6 +236,14 @@ fn state_body(c: &Config, l: &Layout) -> String {
             s += &format!("led     {k} {v}\n");
         }
     }
+    if let Some(p) = c.polling_rate {
+        s += &format!("polling-rate {p}\n");
+    }
+    for (k, v) in [("x", c.sensitivity.x), ("y", c.sensitivity.y)] {
+        if let Some(v) = v {
+            s += &format!("sensitivity {k} {v}\n");
+        }
+    }
     s + &describe_layout(l, &button_slots())
 }
 
@@ -227,6 +262,9 @@ fn merge(parent: Config, child: Config) -> Config {
     m.led.color = child.led.color.or(m.led.color);
     m.led.brightness = child.led.brightness.or(m.led.brightness);
     m.led.effect = child.led.effect.or(m.led.effect);
+    m.polling_rate = child.polling_rate.or(m.polling_rate);
+    m.sensitivity.x = child.sensitivity.x.or(m.sensitivity.x);
+    m.sensitivity.y = child.sensitivity.y.or(m.sensitivity.y);
     m.buttons.extend(child.buttons);
     m.macros.extend(child.macros);
     m

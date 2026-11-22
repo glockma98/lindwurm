@@ -27,6 +27,42 @@ pub struct Config {
     pub macros: BTreeMap<String, MacroConfig>,
     #[serde(default)]
     pub led: LedConfig,
+    #[serde(default, rename = "polling-rate")]
+    pub polling_rate: Option<u16>,
+    #[serde(default)]
+    pub sensitivity: SensitivityConfig,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct SensitivityConfig {
+    pub x: Option<u8>,
+    pub y: Option<u8>,
+}
+
+/// Polling rate in Hz and the command value, which is the USB polling
+/// interval in ms. The mouse reconnects with the new interval; the vendor
+/// software offers 250, 500 and 1000 Hz (500 is the factory setting).
+pub const POLLING_RATES: &[(u16, u8)] = &[(1000, 1), (500, 2), (250, 4), (125, 8)];
+
+/// Per-axis sensitivity 1-10 (command 12 Y X); 10 is the factory setting
+/// and the unscaled speed, lower values slow that axis down.
+pub const SENSITIVITY_MAX: u8 = 10;
+
+pub fn polling_code(hz: u16) -> Result<u8> {
+    POLLING_RATES
+        .iter()
+        .find(|(h, _)| *h == hz)
+        .map(|(_, c)| *c)
+        .ok_or_else(|| err!("polling rate must be one of 1000, 500, 250 or 125 (Hz)"))
+}
+
+pub fn check_sensitivity(v: u8) -> Result<u8> {
+    if (1..=SENSITIVITY_MAX).contains(&v) {
+        Ok(v)
+    } else {
+        Err(err!("sensitivity must be from 1 to {SENSITIVITY_MAX}"))
+    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize, PartialEq)]
@@ -102,6 +138,15 @@ impl Config {
         }
         if let Some(e) = &self.led.effect {
             led_level(LED_EFFECT, e)?;
+        }
+        if let Some(p) = self.polling_rate {
+            polling_code(p)?;
+        }
+        for v in [self.sensitivity.x, self.sensitivity.y]
+            .into_iter()
+            .flatten()
+        {
+            check_sensitivity(v)?;
         }
         Ok(())
     }

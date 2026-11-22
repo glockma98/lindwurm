@@ -3,7 +3,9 @@ use std::time::Duration;
 
 use hidapi::{HidApi, HidDevice};
 
-use crate::config::{led_level, parse_color, LedConfig, LED_BRIGHTNESS, LED_EFFECT};
+use crate::config::{
+    check_sensitivity, led_level, parse_color, polling_code, LedConfig, LED_BRIGHTNESS, LED_EFFECT,
+};
 use crate::protocol::{scrambled, Layout, FEATURE_REPORT, MACRO_BYTES, NUM_SLOTS};
 use crate::{err, Result};
 
@@ -106,6 +108,16 @@ impl Device {
             return Err(err!("dpi needs a level from 1 to 7"));
         }
         self.command(0x09, level, 0, 0)
+    }
+
+    /// The mouse disconnects and reconnects with the new USB polling
+    /// interval right after this command, so it must be the last one sent.
+    pub fn set_polling_rate(&self, hz: u16) -> Result<()> {
+        self.command(0x01, polling_code(hz)?, 0, 0)
+    }
+
+    pub fn set_sensitivity(&self, x: u8, y: u8) -> Result<()> {
+        self.command(0x12, check_sensitivity(y)?, check_sensitivity(x)?, 0)
     }
 
     /// Sends only the LED settings the profile sets. Order and commands as in

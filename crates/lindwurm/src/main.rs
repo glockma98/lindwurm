@@ -9,8 +9,8 @@ use lindwurm_core::{apply_profile, status_text, Error, Result};
 
 const USAGE: &str = "usage: lindwurm <command> [args]
 
-  apply [profile]  write buttons, macros and DPI of a profile to the mouse
-  show [profile]   show DPI, LED, buttons and macros of a profile
+  apply [profile]  write a profile (buttons, macros, DPI, LED, ...) to the mouse
+  show [profile]   show all settings, buttons and macros of a profile
   set <profile> <field> [value]
                    change a field (as listed by show); without value the
                    inherited or default value applies again
@@ -26,6 +26,11 @@ const USAGE: &str = "usage: lindwurm <command> [args]
   profiles         list profiles, * marks the one written last
   status           show the profile written last and its slots
   dpi <1-7>        set the DPI level
+  polling-rate <hz>
+                   set the polling rate (1000, 500, 250 or 125); the mouse
+                   reconnects for a moment
+  sensitivity <x> [y]
+                   set the speed of each axis, 1-10 (10 = unscaled)
   buttons          list button names for the [buttons] table
   actions          list built-in actions
   version          print the version
@@ -134,6 +139,19 @@ fn run(args: &[String]) -> Result<()> {
                 .and_then(|a| a.parse().ok())
                 .ok_or_else(|| Error("dpi needs a level from 1 to 7".into()))?;
             Device::open()?.set_dpi(level)?;
+        }
+        Some("polling-rate") => {
+            let hz = args
+                .get(1)
+                .and_then(|a| a.parse().ok())
+                .ok_or_else(|| Error("polling-rate needs 1000, 500, 250 or 125".into()))?;
+            Device::open()?.set_polling_rate(hz)?;
+            store.record_polling_rate(hz)?;
+        }
+        Some("sensitivity") => {
+            let n = |i: usize| args.get(i).and_then(|a| a.parse::<u8>().ok());
+            let x = n(1).ok_or_else(|| Error("sensitivity needs <x> [y], each 1-10".into()))?;
+            Device::open()?.set_sensitivity(x, n(2).unwrap_or(x))?;
         }
         Some("buttons") => {
             for (name, _, default) in BUTTONS {

@@ -45,7 +45,21 @@ pub fn apply_profile(store: &profile::Store, arg: &str) -> Result<profile::Prepa
         dev.set_dpi(dpi)?;
     }
     dev.set_led(&p.config.led)?;
+    let s = &p.config.sensitivity;
+    if s.x.is_some() || s.y.is_some() {
+        let max = config::SENSITIVITY_MAX;
+        dev.set_sensitivity(s.x.unwrap_or(max), s.y.unwrap_or(max))?;
+    }
+    // Changing the rate makes the mouse reconnect for a moment, so skip it
+    // when the last written profile already set the same rate.
+    let rate = p
+        .config
+        .polling_rate
+        .filter(|r| store.applied_polling_rate() != Some(*r));
     store.write_state(&p.name, &p.config, &p.layout)?;
+    if let Some(r) = rate {
+        dev.set_polling_rate(r)?;
+    }
     Ok(p)
 }
 
