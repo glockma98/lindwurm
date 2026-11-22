@@ -1,5 +1,5 @@
 # Factory settings of the Sharkoon Drakonia Black, taken from profile GROUP0
-# of Mouse.ini in the vendor software (sw_config_lindwurm_black_18135).
+# of Mouse.ini in the vendor software (sw_config_drakonia_black_18135).
 # Built into lindwurm as profile "factory"; clone it to make changes.
 
 dpi = 3                    # DPI=3
