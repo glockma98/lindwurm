@@ -9,7 +9,7 @@ use lindwurm_core::edit::{macro_value, parse_macro_value, Field, Source};
 use lindwurm_core::keys::{key_code, key_names, key_warning};
 use lindwurm_core::profile::Store;
 use lindwurm_core::protocol::MAX_MACRO_STEPS;
-use lindwurm_core::{apply_profile, Result};
+use lindwurm_core::{apply_profile, rescue, Result};
 use ratatui::layout::{Constraint, Flex, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
@@ -725,6 +725,12 @@ impl App {
                 self.reload();
                 self.message = "reloaded".into();
             }
+            (KeyCode::Char('!'), _) => {
+                self.message = match rescue() {
+                    Ok(()) => "mouse set to normal mode and full speed".into(),
+                    Err(e) => format!("error: {e}"),
+                };
+            }
             (KeyCode::Char(c @ '1'..='7'), Focus::Profiles) => {
                 let level = c as u8 - b'0';
                 self.message = match Device::open().and_then(|d| d.set_dpi(level)) {
@@ -804,7 +810,7 @@ impl App {
                 self.message.clone(),
                 match self.focus {
                     Focus::Profiles => {
-                        "enter apply · a quick apply · c clone · D delete · i import ini · 1-7 dpi · tab fields · r reload · q quit".into()
+                        "enter apply · a quick apply · c clone · D delete · i import ini · 1-7 dpi · tab fields · r reload · ! rescue · q quit".into()
                     }
                     Focus::Fields => {
                         "enter choose · e edit text · x reset · a new macro · tab profiles · q quit".into()
