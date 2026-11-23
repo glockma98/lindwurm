@@ -217,8 +217,9 @@ Profiles saved with the vendor software's export button (`*.conf`, by default
 
 If clicks still work but the pointer does not move, or barely moves in one
 direction, the mouse was left in another operating mode or with a low
-sensitivity. `lindwurm rescue` switches it back to normal mode and full speed
-on both axes without touching anything else. `lindwurm apply` also switches
+sensitivity. `lindwurm rescue` (`!` in the TUI, Rescue in the GUI) switches it
+back to normal mode and full speed on both axes without touching anything
+else. `lindwurm apply` also switches
 back to normal mode, and sets the sensitivity if the profile has one.
 
 ## How it works

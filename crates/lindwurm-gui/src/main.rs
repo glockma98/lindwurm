@@ -13,7 +13,7 @@ use lindwurm_core::config::{
 use lindwurm_core::device::Device;
 use lindwurm_core::edit::{Field, Source};
 use lindwurm_core::profile::Store;
-use lindwurm_core::{apply_profile, status_text};
+use lindwurm_core::{apply_profile, rescue, status_text};
 
 struct App {
     store: Store,
@@ -168,6 +168,19 @@ impl App {
                 .clicked()
             {
                 quick = Some(true);
+            }
+            if ui
+                .add_enabled(!busy, egui::Button::new("Rescue"))
+                .on_hover_text(
+                    "If the pointer stopped moving or is very slow: normal mode and \
+                     full speed on both axes. Buttons, macros, DPI and LED stay.",
+                )
+                .clicked()
+            {
+                self.message = match rescue() {
+                    Ok(()) => "mouse set to normal mode and full speed".into(),
+                    Err(e) => format!("error: {e}"),
+                };
             }
         });
         if let Some(quick) = quick {
