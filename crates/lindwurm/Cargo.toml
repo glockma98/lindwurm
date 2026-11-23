@@ -14,4 +14,4 @@ description = "Command line tool to configure buttons, macros, DPI and LED of Ho
 workspace = true
 
 [dependencies]
-lindwurm-core = { path = "../lindwurm-core", version = "0.2.2" }
+lindwurm-core = { path = "../lindwurm-core", version = "0.3.0" }
