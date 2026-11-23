@@ -76,6 +76,14 @@ pub fn apply_profile(
     Ok((p, skip))
 }
 
+/// Normal mode and full speed on both axes, for a pointer that stopped moving;
+/// buttons, macros, DPI and LED stay as they are.
+pub fn rescue() -> Result<()> {
+    let dev = device::Device::open()?;
+    dev.set_normal_mode()?;
+    dev.set_sensitivity(config::SENSITIVITY_MAX, config::SENSITIVITY_MAX)
+}
+
 /// The state file with its timestamp made readable.
 pub fn status_text(store: &profile::Store) -> Result<Option<String>> {
     Ok(store.read_state()?.map(|s| {

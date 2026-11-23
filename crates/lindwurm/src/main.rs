@@ -170,10 +170,7 @@ fn run(args: &[String]) -> Result<()> {
             Device::open()?.set_sensitivity(x, n(2).unwrap_or(x))?;
         }
         Some("rescue") => {
-            let dev = Device::open()?;
-            dev.set_normal_mode()?;
-            let max = lindwurm_core::config::SENSITIVITY_MAX;
-            dev.set_sensitivity(max, max)?;
+            lindwurm_core::rescue()?;
             println!("mouse set to normal mode and full speed");
         }
         Some("buttons") => {
