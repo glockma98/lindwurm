@@ -213,6 +213,14 @@ Profiles saved with the vendor software's export button (`*.conf`, by default
   mouse's memory. Interrupted writes have so far always been fixed by
   replugging and writing again, but use it at your own risk.
 
+## Pointer does not move
+
+If clicks still work but the pointer does not move, or barely moves in one
+direction, the mouse was left in another operating mode or with a low
+sensitivity. `lindwurm rescue` switches it back to normal mode and full speed
+on both axes without touching anything else. `lindwurm apply` also switches
+back to normal mode, and sets the sensitivity if the profile has one.
+
 ## How it works
 
 The mouse takes 8-byte HID feature reports (ID 7) and output reports, each

@@ -35,6 +35,8 @@ const USAGE: &str = "usage: lindwurm <command> [args]
                    reconnects for a moment
   sensitivity <x> [y]
                    set the speed of each axis, 1-10 (10 = unscaled)
+  rescue           if the pointer stopped moving: normal mode and full speed on
+                   both axes; buttons, macros, DPI and LED stay as they are
   buttons          list button names for the [buttons] table
   actions          list built-in actions
   version          print the version
@@ -166,6 +168,13 @@ fn run(args: &[String]) -> Result<()> {
             let n = |i: usize| args.get(i).and_then(|a| a.parse::<u8>().ok());
             let x = n(1).ok_or_else(|| Error("sensitivity needs <x> [y], each 1-10".into()))?;
             Device::open()?.set_sensitivity(x, n(2).unwrap_or(x))?;
+        }
+        Some("rescue") => {
+            let dev = Device::open()?;
+            dev.set_normal_mode()?;
+            let max = lindwurm_core::config::SENSITIVITY_MAX;
+            dev.set_sensitivity(max, max)?;
+            println!("mouse set to normal mode and full speed");
         }
         Some("buttons") => {
             for (name, _, default) in BUTTONS {
