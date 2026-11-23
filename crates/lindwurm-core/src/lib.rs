@@ -51,7 +51,9 @@ pub fn apply_profile(
     let p = store.prepare(arg)?;
     let dev = device::Device::open()?;
     let skip = quick && store.layout_unchanged(&p.layout);
-    if !skip {
+    if skip {
+        dev.set_normal_mode()?;
+    } else {
         dev.write_layout(&p.layout)?;
     }
     if let Some(dpi) = p.config.dpi {

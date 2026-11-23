@@ -123,6 +123,13 @@ impl Device {
         self.command(0x12, check_sensitivity(y)?, check_sensitivity(x)?, 0)
     }
 
+    /// Operating mode 02 01. Modes 00 and 02 stop the pointer while clicks and
+    /// the wheel keep working (verified on a Drakonia Black), so this brings
+    /// back a mouse that was left in either.
+    pub fn set_normal_mode(&self) -> Result<()> {
+        self.command(0x02, 1, 0, 0)
+    }
+
     /// Sends only the LED settings the profile sets. Order and commands as in
     /// the vendor software: color 0A (G, R, B), effect 0B, brightness 0C.
     pub fn set_led(&self, led: &LedConfig) -> Result<()> {
@@ -139,12 +146,12 @@ impl Device {
         Ok(())
     }
 
-    /// Replays the vendor software's sequence: begin (03), commit (02),
-    /// button table length (04), 8 table reports, macro block length (05,
-    /// 0x0600 bytes), 16 macros of 12 reports each.
+    /// Replays the vendor software's sequence: 03 01 (meaning unknown),
+    /// normal mode (02), button table length (04), 8 table reports, macro
+    /// block length (05, 0x0600 bytes), 16 macros of 12 reports each.
     pub fn write_layout(&self, l: &Layout) -> Result<()> {
         self.command(0x03, 1, 0, 0)?;
-        self.command(0x02, 1, 0, 0)?;
+        self.set_normal_mode()?;
         self.command(0x04, 1, (NUM_SLOTS * 4) as u8, 0)?;
         for pair in l.slots.chunks(2) {
             let mut p = [0u8; 8];
