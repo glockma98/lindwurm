@@ -1,10 +1,10 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = ["crates/lindwurm-core", "crates/lindwurm", "crates/lindwurm-tui", "crates/lindwurm-gui"]
 
 [workspace.package]
 version = "0.3.0"
-edition = "2021"
+edition = "2024"
 # eframe 0.37 needs 1.95.
 rust-version = "1.95"
 license = "MIT"

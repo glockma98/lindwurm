@@ -3,8 +3,8 @@ use std::collections::{BTreeMap, HashMap};
 use serde::Deserialize;
 
 use crate::keys::{key_code, key_warning};
-use crate::protocol::{Layout, Slot, MAX_MACRO_STEPS, NUM_MACROS};
-use crate::{err, Result};
+use crate::protocol::{Layout, MAX_MACRO_STEPS, NUM_MACROS, Slot};
+use crate::{Result, err};
 
 #[derive(Debug, Clone, Default, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -125,10 +125,10 @@ impl Config {
     }
 
     pub fn validate(&self) -> Result<()> {
-        if let Some(d) = self.dpi {
-            if !(1..=7).contains(&d) {
-                return Err(err!("dpi must be a level from 1 to 7"));
-            }
+        if let Some(d) = self.dpi
+            && !(1..=7).contains(&d)
+        {
+            return Err(err!("dpi must be a level from 1 to 7"));
         }
         if let Some(c) = &self.led.color {
             parse_color(c)?;
@@ -369,10 +369,12 @@ pub fn build_layout(c: &Config) -> Result<Layout> {
                 "button {name}: {action} needs a host-side handler (the vendor's hid.exe); Linux ignores it"
             ));
         }
-        if s[0] == 0 && s[1] != 0 && s[1] < 0xF0 {
-            if let Some(w) = key_warning(s[1]) {
-                l.warnings.push(format!("button {name}: {w}"));
-            }
+        if s[0] == 0
+            && s[1] != 0
+            && s[1] < 0xF0
+            && let Some(w) = key_warning(s[1])
+        {
+            l.warnings.push(format!("button {name}: {w}"));
         }
     }
     let mut warnings = Vec::new();

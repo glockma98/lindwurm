@@ -3,11 +3,11 @@
 
 use std::fs;
 
-use toml_edit::{value, Array, DocumentMut, Item, Key, Table};
+use toml_edit::{Array, DocumentMut, Item, Key, Table, value};
 
-use crate::config::{canonical_button, Config, MacroConfig, BUTTONS, BUTTON_ALIASES};
+use crate::config::{BUTTON_ALIASES, BUTTONS, Config, MacroConfig, canonical_button};
 use crate::profile::Store;
-use crate::{err, Result};
+use crate::{Result, err};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Source {
@@ -140,14 +140,14 @@ impl Store {
             .into_iter()
             .map(|key| {
                 let (mut value, source, from) = lookup(&key);
-                if source == Source::Default {
-                    if let Some(b) = key.strip_prefix("buttons.") {
-                        value = BUTTONS
-                            .iter()
-                            .find(|(n, _, _)| *n == b)
-                            .map(|(_, _, d)| d.to_string())
-                            .unwrap_or_default();
-                    }
+                if source == Source::Default
+                    && let Some(b) = key.strip_prefix("buttons.")
+                {
+                    value = BUTTONS
+                        .iter()
+                        .find(|(n, _, _)| *n == b)
+                        .map(|(_, _, d)| d.to_string())
+                        .unwrap_or_default();
                 }
                 Field {
                     key,
@@ -262,10 +262,9 @@ impl Store {
             if let Ok((c, _)) = self
                 .resolve(&other)
                 .and_then(|(p, _)| Ok((Config::parse(&self.read_profile(&p)?)?, ())))
+                && c.extends.as_deref() == Some(name)
             {
-                if c.extends.as_deref() == Some(name) {
-                    return Err(err!("profile {other} extends {name}"));
-                }
+                return Err(err!("profile {other} extends {name}"));
             }
         }
         fs::remove_file(path)?;
@@ -469,12 +468,16 @@ mod tests {
         store
             .set_field("game", "polling-rate", Some("250"))
             .unwrap();
-        assert!(store
-            .set_field("game", "polling-rate", Some("300"))
-            .is_err());
-        assert!(store
-            .set_field("game", "sensitivity.x", Some("11"))
-            .is_err());
+        assert!(
+            store
+                .set_field("game", "polling-rate", Some("300"))
+                .is_err()
+        );
+        assert!(
+            store
+                .set_field("game", "sensitivity.x", Some("11"))
+                .is_err()
+        );
         let p = store.prepare("game").unwrap();
         assert_eq!(p.config.polling_rate, Some(250));
         assert_eq!(
@@ -592,9 +595,11 @@ mod tests {
         assert!(store.set_field("factory", "dpi", Some("5")).is_err());
         assert!(store.delete_profile("factory").is_err());
         store.clone_profile("factory", "mine").unwrap();
-        assert!(fs::read_to_string(store.profiles_dir.join("mine.toml"))
-            .unwrap()
-            .contains("illumination"));
+        assert!(
+            fs::read_to_string(store.profiles_dir.join("mine.toml"))
+                .unwrap()
+                .contains("illumination")
+        );
         // Setting the canonical name replaces the alias spelling in the file.
         store
             .set_field("mine", "buttons.side-right", Some("copy"))

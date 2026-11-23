@@ -3,9 +3,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use crate::config::{build_layout, button_slots, Config};
-use crate::protocol::{describe_layout, Layout};
-use crate::{err, Result};
+use crate::config::{Config, build_layout, button_slots};
+use crate::protocol::{Layout, describe_layout};
+use crate::{Result, err};
 
 pub const DEFAULT_PROFILE: &str = "default";
 pub const FACTORY_PROFILE: &str = "factory";
@@ -155,10 +155,10 @@ impl Store {
         names.push(FACTORY_PROFILE.to_string());
         for e in entries {
             let p = e?.path();
-            if p.extension().is_some_and(|x| x == "toml") {
-                if let Some(stem) = p.file_stem() {
-                    names.push(stem.to_string_lossy().into_owned());
-                }
+            if p.extension().is_some_and(|x| x == "toml")
+                && let Some(stem) = p.file_stem()
+            {
+                names.push(stem.to_string_lossy().into_owned());
             }
         }
         names.sort();

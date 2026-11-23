@@ -4,10 +4,10 @@ use std::time::Duration;
 use hidapi::{HidApi, HidDevice};
 
 use crate::config::{
-    check_sensitivity, led_level, parse_color, polling_code, LedConfig, LED_BRIGHTNESS, LED_EFFECT,
+    LED_BRIGHTNESS, LED_EFFECT, LedConfig, check_sensitivity, led_level, parse_color, polling_code,
 };
-use crate::protocol::{scrambled, Layout, FEATURE_REPORT, MACRO_BYTES, NUM_SLOTS};
-use crate::{err, Result};
+use crate::protocol::{FEATURE_REPORT, Layout, MACRO_BYTES, NUM_SLOTS, scrambled};
+use crate::{Result, err};
 
 pub const VENDOR_ID: u16 = 0x04D9;
 pub const PRODUCT_ID: u16 = 0xA067;
@@ -27,20 +27,17 @@ KERNEL==\"hidraw*\", ATTRS{idVendor}==\"04d9\", ATTRS{idProduct}==\"a067\", TAG+
 /// hidapi only reports a generic open failure; on Linux check the node
 /// first so a missing udev rule gets a useful message.
 fn check_access(info: &hidapi::DeviceInfo) -> Result<()> {
-    if cfg!(target_os = "linux") {
-        if let Ok(path) = info.path().to_str() {
-            if let Err(e) = std::fs::OpenOptions::new()
-                .read(true)
-                .write(true)
-                .open(path)
-            {
-                if e.kind() == std::io::ErrorKind::PermissionDenied {
-                    return Err(err!(
-                        "no permission to open {path}; install the udev rule (`lindwurm udev-rule`) and replug the mouse"
-                    ));
-                }
-            }
-        }
+    if cfg!(target_os = "linux")
+        && let Ok(path) = info.path().to_str()
+        && let Err(e) = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(path)
+        && e.kind() == std::io::ErrorKind::PermissionDenied
+    {
+        return Err(err!(
+            "no permission to open {path}; install the udev rule (`lindwurm udev-rule`) and replug the mouse"
+        ));
     }
     Ok(())
 }

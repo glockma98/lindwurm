@@ -3,12 +3,12 @@
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
 use std::collections::HashMap;
-use std::sync::mpsc::{channel, Receiver};
+use std::sync::mpsc::{Receiver, channel};
 use std::thread;
 
 use eframe::egui;
 use lindwurm_core::config::{
-    action_fits, parse_color, ACTIONS, CONSUMER_CODES, LED_BRIGHTNESS, LED_EFFECT,
+    ACTIONS, CONSUMER_CODES, LED_BRIGHTNESS, LED_EFFECT, action_fits, parse_color,
 };
 use lindwurm_core::device::Device;
 use lindwurm_core::edit::{Field, Source};
@@ -252,13 +252,12 @@ impl App {
                         .hint_text("Mouse.ini or .conf")
                         .desired_width(110.0),
                 );
-                if ui.button("Browse…").clicked() {
-                    if let Some(p) = rfd::FileDialog::new()
+                if ui.button("Browse…").clicked()
+                    && let Some(p) = rfd::FileDialog::new()
                         .add_filter("Mouse.ini or exported profile", &["ini", "INI", "conf"])
                         .pick_file()
-                    {
-                        self.import_path = p.display().to_string();
-                    }
+                {
+                    self.import_path = p.display().to_string();
                 }
             });
             ui.horizontal(|ui| {
@@ -499,13 +498,13 @@ impl App {
 
 impl eframe::App for App {
     fn ui(&mut self, root: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        if let Some(rx) = &self.pending {
-            if let Ok(msg) = rx.try_recv() {
-                self.message = msg;
-                self.pending = None;
-                self.active = self.store.active();
-                self.load_fields();
-            }
+        if let Some(rx) = &self.pending
+            && let Ok(msg) = rx.try_recv()
+        {
+            self.message = msg;
+            self.pending = None;
+            self.active = self.store.active();
+            self.load_fields();
         }
         let busy = self.pending.is_some();
         egui::Panel::bottom("status").show(root, |ui| {

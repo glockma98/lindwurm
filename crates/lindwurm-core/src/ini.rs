@@ -11,9 +11,9 @@
 
 use std::collections::BTreeMap;
 
-use crate::config::{build_layout, Config, BUTTONS, LED_BRIGHTNESS, LED_EFFECT};
+use crate::config::{BUTTONS, Config, LED_BRIGHTNESS, LED_EFFECT, build_layout};
 use crate::keys::key_name;
-use crate::{err, Result};
+use crate::{Result, err};
 
 const RECORD_LEN: usize = 84;
 const NUM_GROUPS: usize = 5;
@@ -166,10 +166,11 @@ pub fn import(text: &str, source: &str) -> Result<Vec<Imported>> {
         let mut buttons = String::new();
         let mut macros = String::new();
 
-        if let Some(d) = group_value(group, "DPI") {
-            if (1..=7).contains(&d) && d != u32::from(FACTORY_DPI) {
-                settings += &format!("dpi = {d}\n");
-            }
+        if let Some(d) = group_value(group, "DPI")
+            && (1..=7).contains(&d)
+            && d != u32::from(FACTORY_DPI)
+        {
+            settings += &format!("dpi = {d}\n");
         }
         if let Some(c) = group_value(group, "LedColor") {
             let color = format!(
@@ -182,19 +183,21 @@ pub fn import(text: &str, source: &str) -> Result<Vec<Imported>> {
                 led += &format!("color      = {}   # LedColor={c}\n", quote(&color));
             }
         }
-        if let Some(s) = group_value(group, "LedState") {
-            if (1..=4).contains(&s) && s != u32::from(FACTORY_LED_STATE) {
-                let name = LED_BRIGHTNESS[s as usize - 1];
-                led += &format!("brightness = {}   # LedState={s}\n", quote(name));
-            }
+        if let Some(s) = group_value(group, "LedState")
+            && (1..=4).contains(&s)
+            && s != u32::from(FACTORY_LED_STATE)
+        {
+            let name = LED_BRIGHTNESS[s as usize - 1];
+            led += &format!("brightness = {}   # LedState={s}\n", quote(name));
         }
-        if let Some(f) = group_value(group, "FlashState") {
-            if (1..=4).contains(&f) && f != u32::from(FACTORY_FLASH_STATE) {
-                led += &format!(
-                    "effect     = {}   # FlashState={f}\n",
-                    quote(LED_EFFECT[f as usize - 1])
-                );
-            }
+        if let Some(f) = group_value(group, "FlashState")
+            && (1..=4).contains(&f)
+            && f != u32::from(FACTORY_FLASH_STATE)
+        {
+            led += &format!(
+                "effect     = {}   # FlashState={f}\n",
+                quote(LED_EFFECT[f as usize - 1])
+            );
         }
         // The vendor software offers three rates and sends 04, 02 or 01.
         if let Some(p) = group_value(group, "PollingRate") {
@@ -208,10 +211,10 @@ pub fn import(text: &str, source: &str) -> Result<Vec<Imported>> {
         let mut sensitivity = String::new();
         if group_value(group, "XYSensitivityEnabled") == Some(1) {
             for (axis, key) in [("x", "MouseSpeedX"), ("y", "MouseSpeedY")] {
-                if let Some(v) = group_value(group, key) {
-                    if (1..=9).contains(&v) {
-                        sensitivity += &format!("{axis} = {v}   # {key}={v}\n");
-                    }
+                if let Some(v) = group_value(group, key)
+                    && (1..=9).contains(&v)
+                {
+                    sensitivity += &format!("{axis} = {v}   # {key}={v}\n");
                 }
             }
         }

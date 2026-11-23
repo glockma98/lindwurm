@@ -2,14 +2,14 @@ use std::process::ExitCode;
 
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use lindwurm_core::config::{
-    action_fits, check_macro, MacroConfig, ACTIONS, CONSUMER_CODES, LED_BRIGHTNESS, LED_EFFECT,
+    ACTIONS, CONSUMER_CODES, LED_BRIGHTNESS, LED_EFFECT, MacroConfig, action_fits, check_macro,
 };
 use lindwurm_core::device::Device;
-use lindwurm_core::edit::{macro_value, parse_macro_value, Field, Source};
+use lindwurm_core::edit::{Field, Source, macro_value, parse_macro_value};
 use lindwurm_core::keys::{key_code, key_names, key_warning};
 use lindwurm_core::profile::Store;
 use lindwurm_core::protocol::MAX_MACRO_STEPS;
-use lindwurm_core::{apply_profile, rescue, Result};
+use lindwurm_core::{Result, apply_profile, rescue};
 use ratatui::layout::{Constraint, Flex, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
@@ -667,22 +667,16 @@ impl App {
     fn on_key(&mut self, code: KeyCode, terminal: &mut DefaultTerminal) -> bool {
         match self.modals.last() {
             Some(Modal::Prompt(..)) => {
-                return {
-                    self.prompt_key(code);
-                    true
-                }
+                self.prompt_key(code);
+                return true;
             }
             Some(Modal::Picker(_)) => {
-                return {
-                    self.picker_key(code);
-                    true
-                }
+                self.picker_key(code);
+                return true;
             }
             Some(Modal::Builder(_)) => {
-                return {
-                    self.builder_key(code);
-                    true
-                }
+                self.builder_key(code);
+                return true;
             }
             None => {}
         }

@@ -1,11 +1,11 @@
 use std::process::ExitCode;
 
-use lindwurm_core::config::{action_help, button_slots, BUTTONS, BUTTON_ALIASES};
+use lindwurm_core::config::{BUTTON_ALIASES, BUTTONS, action_help, button_slots};
 use lindwurm_core::device::Device;
 use lindwurm_core::edit::Source;
 use lindwurm_core::profile::Store;
 use lindwurm_core::protocol::describe_layout;
-use lindwurm_core::{apply_profile, status_text, Error, Result};
+use lindwurm_core::{Error, Result, apply_profile, status_text};
 
 const USAGE: &str = "usage: lindwurm <command> [args]
 
